@@ -108,7 +108,7 @@ const ClubInfo = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 0;
   width: 100%;
 `;
 
@@ -117,6 +117,10 @@ const ClubRow = styled.div`
   align-items: center;
   gap: 20px;
   width: 100%;
+
+  &:last-child {
+    margin-top: -10px;
+  }
 `;
 
 const PlayedFor = styled.span`
