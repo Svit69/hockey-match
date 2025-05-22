@@ -54,12 +54,6 @@ const ResultItem = styled.li`
 
 const PlayerName = styled.div`
   font-weight: bold;
-  margin-bottom: 4px;
-`;
-
-const TeamsList = styled.div`
-  font-size: 14px;
-  color: #888;
 `;
 
 interface PlayerSearchProps {
@@ -121,7 +115,6 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
           {results.map((result, index) => (
             <ResultItem key={index} onClick={() => handleSelect(result)}>
               <PlayerName>{result.player.name}</PlayerName>
-              <TeamsList>{result.player.teams.join(' → ')}</TeamsList>
             </ResultItem>
           ))}
         </ResultsList>

@@ -106,22 +106,40 @@ const ClubLogo = styled.div`
 
 function App() {
   const [isMuted, setIsMuted] = useState(false);
-  const [winStreak, setWinStreak] = useState(1);
+  const [winStreak, setWinStreak] = useState(0);
   const [currentClubs, setCurrentClubs] = useState<[Club, Club]>([clubs[0], clubs[1]]);
 
+  const getRandomClubs = () => {
+    const shuffled = [...clubs].sort(() => 0.5 - Math.random());
+    return [shuffled[0], shuffled[1]] as [Club, Club];
+  };
+
   useEffect(() => {
-    // Select two random clubs
-    const getRandomClubs = () => {
-      const shuffled = [...clubs].sort(() => 0.5 - Math.random());
-      return [shuffled[0], shuffled[1]] as [Club, Club];
-    };
-    
     setCurrentClubs(getRandomClubs());
   }, []);
 
   const handlePlayerSelect = (result: SearchResult) => {
-    // Здесь будет логика обработки выбора игрока
-    console.log('Selected player:', result.player);
+    const playerTeams = result.player.teams;
+    const currentClubNames = [
+      currentClubs[0].logoFile.replace('.png', ''),
+      currentClubs[1].logoFile.replace('.png', '')
+    ];
+
+    // Проверяем, играл ли игрок за оба клуба
+    const playedForBothClubs = currentClubNames.every(clubName =>
+      playerTeams.some(team => team.includes(clubName))
+    );
+
+    if (playedForBothClubs) {
+      // Если играл за оба клуба, увеличиваем серию побед
+      setWinStreak(prev => prev + 1);
+    } else {
+      // Если не играл хотя бы за один клуб, обнуляем серию
+      setWinStreak(0);
+    }
+
+    // Генерируем новые случайные клубы
+    setCurrentClubs(getRandomClubs());
   };
 
   return (
