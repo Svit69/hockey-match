@@ -110,6 +110,14 @@ const ClubInfo = styled.div`
   align-items: flex-start;
   gap: 0;
   width: 100%;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.1s ease-out;
+  cursor: default;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
 const ClubRow = styled.div`
@@ -121,6 +129,13 @@ const ClubRow = styled.div`
   &:last-child {
     margin-top: -10px;
   }
+`;
+
+const TiltContainer = styled.div<{ rotateX: number; rotateY: number }>`
+  transform: rotateX(${props => props.rotateX}deg) rotateY(${props => props.rotateY}deg);
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease-out;
+  width: 100%;
 `;
 
 const PlayedFor = styled.span`
@@ -155,6 +170,26 @@ function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [winStreak, setWinStreak] = useState(0);
   const [currentClubs, setCurrentClubs] = useState<[Club, Club]>([clubs[0], clubs[1]]);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const rect = element.getBoundingClientRect();
+    
+    // Calculate mouse position relative to element center
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    
+    // Convert to rotation degrees (-5 to 5 degrees)
+    const rotateY = (x / rect.width) * 10;
+    const rotateX = -(y / rect.height) * 10;
+    
+    setTilt({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
 
   // Функция для очистки названия команды от лишних символов
   const cleanTeamName = (name: string): string => {
@@ -233,19 +268,24 @@ function App() {
             <span className="number">{winStreak}</span>
           </WinStreak>
 
-          <ClubInfo>
-            <ClubRow>
-              <PlayedFor>Играл за</PlayedFor>
-              <ClubLogo>
-                <img src={`/images/${currentClubs[0].logoFile}`} alt={currentClubs[0].name} />
-              </ClubLogo>
-            </ClubRow>
-            <ClubRow>
-              <AndFor>и за</AndFor>
-              <ClubLogo>
-                <img src={`/images/${currentClubs[1].logoFile}`} alt={currentClubs[1].name} />
-              </ClubLogo>
-            </ClubRow>
+          <ClubInfo
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            <TiltContainer rotateX={tilt.x} rotateY={tilt.y}>
+              <ClubRow>
+                <PlayedFor>Играл за</PlayedFor>
+                <ClubLogo>
+                  <img src={`/images/${currentClubs[0].logoFile}`} alt={currentClubs[0].name} />
+                </ClubLogo>
+              </ClubRow>
+              <ClubRow>
+                <AndFor>и за</AndFor>
+                <ClubLogo>
+                  <img src={`/images/${currentClubs[1].logoFile}`} alt={currentClubs[1].name} />
+                </ClubLogo>
+              </ClubRow>
+            </TiltContainer>
           </ClubInfo>
         </InfoSection>
       </MainContent>
