@@ -112,7 +112,7 @@ function App() {
   const getRandomClubs = () => {
     const shuffled = [...clubs].sort(() => 0.5 - Math.random());
     const selectedClubs = [shuffled[0], shuffled[1]] as [Club, Club];
-    console.log('Случайные клубы:', selectedClubs.map(club => club.logoFile.replace('.png', '')));
+    console.log('Случайные клубы:', selectedClubs.map(club => club.name));
     return selectedClubs;
   };
 
@@ -125,7 +125,7 @@ function App() {
     const playerTeams = result.player.teams.flatMap(teamStr => teamStr.split('/').map(team => team.trim()));
     console.log('Команды игрока:', playerTeams);
 
-    const currentClubNames = currentClubs.map(club => club.logoFile.replace('.png', ''));
+    const currentClubNames = currentClubs.map(club => club.name);
     console.log('Нужно найти команды:', currentClubNames);
 
     // Проверяем, играл ли игрок за оба клуба
