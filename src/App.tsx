@@ -93,7 +93,11 @@ const popupAnimation = keyframes`
   }
 `;
 
-const WinStreak = styled.div`
+interface WinStreakProps {
+  $streakColor: string;
+}
+
+const WinStreak = styled.div<WinStreakProps>`
   font-size: 20px;
   margin-bottom: 20px;
   display: flex;
@@ -102,7 +106,7 @@ const WinStreak = styled.div`
   position: relative;
 
   span.number {
-    color: ${props => props.theme.streakColor};
+    color: ${props => props.$streakColor};
     font-weight: bold;
     margin-left: 8px;
     transition: color 0.3s ease;
@@ -239,20 +243,19 @@ function App() {
     setCurrentClubs(getRandomClubs());
   }, []);
 
-  const animateWinStreak = async (currentStreak: number) => {
+  const animateWinStreak = async () => {
     setShowPlusOne(true);
-    setTimeout(() => setShowPlusOne(false), 1000);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setShowPlusOne(false);
   };
 
   const animateStreakReset = async (currentStreak: number) => {
     setStreakColor('#E70000');
     for (let i = currentStreak; i >= 0; i--) {
-      await new Promise(resolve => setTimeout(resolve, 200));
       setWinStreak(i);
-      if (i === 0) {
-        setStreakColor('#ABE700');
-      }
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
+    setStreakColor('#ABE700');
   };
 
   const handlePlayerSelect = async (result: SearchResult) => {
@@ -271,9 +274,8 @@ function App() {
 
     if (playedForBothClubs) {
       console.log('✅ ПРАВИЛЬНО! Игрок действительно играл за оба клуба');
-      const newStreak = winStreak + 1;
-      await animateWinStreak(winStreak);
-      setWinStreak(newStreak);
+      await animateWinStreak();
+      setWinStreak(prev => prev + 1);
     } else {
       console.log('❌ НЕПРАВИЛЬНО! Игрок не играл за оба этих клуба');
       currentClubNames.forEach(clubName => {
@@ -305,7 +307,7 @@ function App() {
         </SearchSection>
 
         <InfoSection>
-          <WinStreak theme={{ streakColor }}>
+          <WinStreak $streakColor={streakColor}>
             <span className="text">серия побед:</span>
             <span className="number">{winStreak}</span>
             {showPlusOne && <PlusOnePopup>+1</PlusOnePopup>}
