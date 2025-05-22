@@ -76,19 +76,19 @@ const InfoSection = styled.div`
 
 const popupAnimation = keyframes`
   0% {
-    transform: scale(0);
+    transform: translate(-50%, -50%) scale(0);
     opacity: 0;
   }
-  50% {
-    transform: scale(1.2);
+  20% {
+    transform: translate(-50%, -50%) scale(1.2);
     opacity: 1;
   }
-  80% {
-    transform: translateY(-20px);
-    opacity: 0.5;
+  60% {
+    transform: translate(-50%, -100%) scale(1);
+    opacity: 1;
   }
   100% {
-    transform: translateY(-30px);
+    transform: translate(-50%, -200%) scale(1);
     opacity: 0;
   }
 `;
@@ -110,6 +110,7 @@ const WinStreak = styled.div<WinStreakProps>`
     font-weight: bold;
     margin-left: 8px;
     transition: color 0.3s ease;
+    position: relative;
   }
 
   span.text {
@@ -131,9 +132,9 @@ const WinStreak = styled.div<WinStreakProps>`
 
 const PlusOnePopup = styled.div`
   position: absolute;
-  right: -10px;
+  left: 50%;
   top: 50%;
-  transform: translateY(-50%);
+  transform-origin: center;
   background-color: #ABE700;
   color: white;
   font-weight: bold;
@@ -141,6 +142,8 @@ const PlusOnePopup = styled.div`
   border-radius: 12px;
   animation: ${popupAnimation} 1s ease-out forwards;
   z-index: 2;
+  white-space: nowrap;
+  pointer-events: none;
 `;
 
 const ClubInfo = styled.div`
@@ -309,8 +312,10 @@ function App() {
         <InfoSection>
           <WinStreak $streakColor={streakColor}>
             <span className="text">серия побед:</span>
-            <span className="number">{winStreak}</span>
-            {showPlusOne && <PlusOnePopup>+1</PlusOnePopup>}
+            <span className="number">
+              {winStreak}
+              {showPlusOne && <PlusOnePopup>+1</PlusOnePopup>}
+            </span>
           </WinStreak>
 
           <ClubInfo>
