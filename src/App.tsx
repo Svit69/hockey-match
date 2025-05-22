@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { clubs, Club } from './types/clubs';
+import { PlayerSearch } from './components/PlayerSearch';
+import { SearchResult } from './types/players';
 
 const AppContainer = styled.div`
   background-color: #1a1a1a;
@@ -117,6 +119,11 @@ function App() {
     setCurrentClubs(getRandomClubs());
   }, []);
 
+  const handlePlayerSelect = (result: SearchResult) => {
+    // Здесь будет логика обработки выбора игрока
+    console.log('Selected player:', result.player);
+  };
+
   return (
     <AppContainer>
       <Header>
@@ -131,7 +138,7 @@ function App() {
 
       <MainContent>
         <SearchSection>
-          <SearchInput type="text" placeholder="Поиск" />
+          <PlayerSearch onSelect={handlePlayerSelect} />
         </SearchSection>
 
         <InfoSection>
