@@ -83,6 +83,10 @@ const popupAnimation = keyframes`
     transform: translate(-50%, -50%) scale(1.2);
     opacity: 1;
   }
+  40% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
   60% {
     transform: translate(-50%, -100%) scale(1);
     opacity: 1;
@@ -248,6 +252,11 @@ function App() {
 
   const animateWinStreak = async () => {
     setShowPlusOne(true);
+    // Ждем 400мс (40% от анимации) перед обновлением числа
+    setTimeout(() => {
+      setWinStreak(prev => prev + 1);
+    }, 400);
+    // Полная анимация длится 1 секунду
     await new Promise(resolve => setTimeout(resolve, 1000));
     setShowPlusOne(false);
   };
@@ -278,7 +287,6 @@ function App() {
     if (playedForBothClubs) {
       console.log('✅ ПРАВИЛЬНО! Игрок действительно играл за оба клуба');
       await animateWinStreak();
-      setWinStreak(prev => prev + 1);
     } else {
       console.log('❌ НЕПРАВИЛЬНО! Игрок не играл за оба этих клуба');
       currentClubNames.forEach(clubName => {
