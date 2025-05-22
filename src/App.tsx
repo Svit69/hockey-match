@@ -16,9 +16,9 @@ const Header = styled.header`
   margin-bottom: 50px;
 `;
 
-const Logo = styled.div`
-  font-size: 24px;
-  font-weight: bold;
+const Logo = styled.img`
+  height: 40px;
+  width: auto;
 `;
 
 const Controls = styled.div`
@@ -93,6 +93,13 @@ const ClubLogo = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 `;
 
 function App() {
@@ -113,7 +120,7 @@ function App() {
   return (
     <AppContainer>
       <Header>
-        <Logo>ГОЛЕВАЯ</Logo>
+        <Logo src="/logo.png" alt="ГОЛЕВАЯ" />
         <Controls>
           <Button onClick={() => setIsMuted(!isMuted)}>
             {isMuted ? '🔇' : '🔊'}
@@ -134,9 +141,13 @@ function App() {
 
           <ClubInfo>
             Играл за
-            <ClubLogo>{currentClubs[0].name.charAt(0)}</ClubLogo>
+            <ClubLogo>
+              <img src={`/images/${currentClubs[0].logoFile}`} alt={currentClubs[0].name} />
+            </ClubLogo>
             и за
-            <ClubLogo>{currentClubs[1].name.charAt(0)}</ClubLogo>
+            <ClubLogo>
+              <img src={`/images/${currentClubs[1].logoFile}`} alt={currentClubs[1].name} />
+            </ClubLogo>
           </ClubInfo>
         </InfoSection>
       </MainContent>
