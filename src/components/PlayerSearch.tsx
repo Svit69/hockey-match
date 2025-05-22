@@ -6,15 +6,20 @@ const SearchContainer = styled.div`
   position: relative;
   width: 100%;
   max-width: 400px;
+  transform-style: preserve-3d;
+  perspective: 1000px;
 `;
 
-const SearchWrapper = styled.div`
+const SearchWrapper = styled.div<{ isFocused: boolean }>`
   position: relative;
   width: 100%;
   background: url('/placeholder.svg') no-repeat;
   background-size: cover;
   margin-left: 16px;
   cursor: text;
+  transform-style: preserve-3d;
+  transition: transform 0.1s ease-out;
+  transform: ${props => props.isFocused ? 'scale(1.05)' : 'scale(1)'};
 `;
 
 const SearchInput = styled.input`
@@ -87,6 +92,7 @@ interface PlayerSearchProps {
 export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     const searchPlayers = async () => {
@@ -96,8 +102,6 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
       }
 
       try {
-        // Здесь будет логика загрузки и фильтрации данных из CSV
-        // Пока используем заглушку
         const response = await fetch('/players.csv');
         const text = await response.text();
         const players = parseCSV(text);
@@ -124,16 +128,19 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
     onSelect(result);
     setSearchTerm('');
     setResults([]);
+    setIsFocused(false);
   };
 
   return (
     <SearchContainer>
-      <SearchWrapper>
+      <SearchWrapper isFocused={isFocused}>
         <SearchIcon src="/search.svg" alt="Search" />
         <SearchInput
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => !searchTerm && setIsFocused(false)}
           placeholder="Поиск"
         />
       </SearchWrapper>
