@@ -89,6 +89,54 @@ interface PlayerSearchProps {
   onSelect: (result: SearchResult) => void;
 }
 
+// Функция для нормализации текста
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    // Замена ё на е
+    .replace(/ё/g, 'е')
+    // Удаление всех диакритических знаков
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    // Удаление специальных символов
+    .replace(/[^a-zа-я0-9\s]/g, '')
+    // Удаление множественных пробелов
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+// Функция для вычисления расстояния Левенштейна (для нечеткого поиска)
+const levenshteinDistance = (a: string, b: string): number => {
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const matrix = Array(b.length + 1).fill(null).map(() => 
+    Array(a.length + 1).fill(null)
+  );
+
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1, // удаление
+        matrix[j - 1][i] + 1, // вставка
+        matrix[j - 1][i - 1] + substitutionCost // замена
+      );
+    }
+  }
+
+  return matrix[b.length][a.length];
+};
+
+// Функция для определения схожести строк (в процентах)
+const calculateSimilarity = (a: string, b: string): number => {
+  const distance = levenshteinDistance(a, b);
+  const maxLength = Math.max(a.length, b.length);
+  return (1 - distance / maxLength) * 100;
+};
+
 export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -106,12 +154,28 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
         const text = await response.text();
         const players = parseCSV(text);
         
-        const filtered = players.filter(player => 
-          player.name.toLowerCase().includes(searchTerm.toLowerCase())
-        ).map(player => ({
-          player,
-          matchType: 'name' as const
-        }));
+        const normalizedSearchTerm = normalizeText(searchTerm);
+        
+        const filtered = players
+          .map(player => {
+            const normalizedName = normalizeText(player.name);
+            const similarity = calculateSimilarity(normalizedName, normalizedSearchTerm);
+            
+            return {
+              player,
+              similarity,
+              matchType: 'name' as const
+            };
+          })
+          .filter(result => {
+            // Показываем результаты с схожестью более 60%
+            // или если нормализованное имя содержит поисковый запрос
+            const normalizedName = normalizeText(result.player.name);
+            return result.similarity >= 60 || 
+                   normalizedName.includes(normalizedSearchTerm);
+          })
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, 10); // Ограничиваем количество результатов
 
         setResults(filtered);
       } catch (error) {
