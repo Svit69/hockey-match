@@ -172,24 +172,27 @@ function App() {
   const [currentClubs, setCurrentClubs] = useState<[Club, Club]>([clubs[0], clubs[1]]);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const element = e.currentTarget;
-    const rect = element.getBoundingClientRect();
-    
-    // Calculate mouse position relative to element center
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    
-    // Convert to rotation degrees (-5 to 5 degrees)
-    const rotateY = (x / rect.width) * 10;
-    const rotateX = -(y / rect.height) * 10;
-    
-    setTilt({ x: rotateX, y: rotateY });
-  };
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Calculate mouse position relative to window center
+      const x = e.clientX - window.innerWidth / 2;
+      const y = e.clientY - window.innerHeight / 2;
+      
+      // Convert to rotation degrees (-10 to 10 degrees)
+      const rotateY = (x / (window.innerWidth / 2)) * 10;
+      const rotateX = -(y / (window.innerHeight / 2)) * 10;
+      
+      setTilt({ x: rotateX, y: rotateY });
+    };
 
-  const handleMouseLeave = () => {
-    setTilt({ x: 0, y: 0 });
-  };
+    // Add event listener to window
+    window.addEventListener('mousemove', handleMouseMove);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   // Функция для очистки названия команды от лишних символов
   const cleanTeamName = (name: string): string => {
@@ -268,10 +271,7 @@ function App() {
             <span className="number">{winStreak}</span>
           </WinStreak>
 
-          <ClubInfo
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-          >
+          <ClubInfo>
             <TiltContainer rotateX={tilt.x} rotateY={tilt.y}>
               <ClubRow>
                 <PlayedFor>Играл за</PlayedFor>
