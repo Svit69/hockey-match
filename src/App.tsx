@@ -89,28 +89,34 @@ const WinStreak = styled.div`
 
   span.text {
     font-weight: normal;
+    display: flex;
+    align-items: center;
   }
 
   &::before {
     content: "*";
-    font-size: 48px;
+    font-size: 64px;
     line-height: 1;
     color: white;
+    display: flex;
+    align-items: center;
+    margin-right: 4px;
   }
 `;
 
 const ClubInfo = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 12px;
+  width: 100%;
 `;
 
 const ClubRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 20px;
+  width: 100%;
 `;
 
 const PlayedFor = styled.span`
@@ -125,8 +131,8 @@ const AndFor = styled.span`
 `;
 
 const ClubLogo = styled.div`
-  width: 50px;
-  height: 50px;
+  width: 80px;
+  height: 80px;
   background: #333;
   border-radius: 50%;
   display: flex;
