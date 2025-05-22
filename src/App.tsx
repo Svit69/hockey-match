@@ -109,6 +109,14 @@ function App() {
   const [winStreak, setWinStreak] = useState(0);
   const [currentClubs, setCurrentClubs] = useState<[Club, Club]>([clubs[0], clubs[1]]);
 
+  // Функция для очистки названия команды от лишних символов
+  const cleanTeamName = (name: string): string => {
+    return name
+      .replace(/["""]/g, '') // Удаляем разные типы кавычек
+      .replace(/\s+/g, ' ')  // Заменяем множественные пробелы на один
+      .trim();               // Убираем пробелы в начале и конце
+  };
+
   const getRandomClubs = () => {
     const shuffled = [...clubs].sort(() => 0.5 - Math.random());
     const selectedClubs = [shuffled[0], shuffled[1]] as [Club, Club];
@@ -121,16 +129,20 @@ function App() {
   }, []);
 
   const handlePlayerSelect = (result: SearchResult) => {
-    // Получаем массив команд игрока, разделяя их по "/"
-    const playerTeams = result.player.teams.flatMap(teamStr => teamStr.split('/').map(team => team.trim()));
-    console.log('Команды игрока:', playerTeams);
+    // Получаем массив команд игрока, разделяя их по "/" и очищая каждое название
+    const playerTeams = result.player.teams
+      .flatMap(teamStr => teamStr.split('/'))
+      .map(team => cleanTeamName(team))
+      .filter(team => team !== ''); // Удаляем пустые строки
+
+    console.log('Команды игрока (очищенные):', playerTeams);
 
     const currentClubNames = currentClubs.map(club => club.name);
     console.log('Нужно найти команды:', currentClubNames);
 
     // Проверяем, играл ли игрок за оба клуба
     const playedForBothClubs = currentClubNames.every(clubName =>
-      playerTeams.some(team => team === clubName)
+      playerTeams.some(team => cleanTeamName(team) === clubName)
     );
 
     if (playedForBothClubs) {
@@ -140,7 +152,7 @@ function App() {
       console.log('❌ НЕПРАВИЛЬНО! Игрок не играл за оба этих клуба');
       // Выводим, за какие клубы не играл
       currentClubNames.forEach(clubName => {
-        if (!playerTeams.some(team => team === clubName)) {
+        if (!playerTeams.some(team => cleanTeamName(team) === clubName)) {
           console.log(`Игрок не играл за: ${clubName}`);
         }
       });
