@@ -13,6 +13,7 @@ const SearchWrapper = styled.div`
   width: 100%;
   background: url('/placeholder.svg') no-repeat;
   background-size: cover;
+  margin-left: 16px;
   cursor: text;
 `;
 
@@ -36,11 +37,11 @@ const SearchInput = styled.input`
 
 const SearchIcon = styled.img`
   position: absolute;
-  left: 8px;
+  left: -8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   pointer-events: none;
   z-index: 1;
 `;
