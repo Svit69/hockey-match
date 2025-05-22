@@ -13,15 +13,17 @@ const SearchWrapper = styled.div`
   width: 100%;
   background: url('/placeholder.svg') no-repeat;
   background-size: cover;
+  cursor: text;
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 12px 12px 12px 40px;
+  padding: 12px 12px 12px 48px;
   background: transparent;
   border: none;
-  color: white;
+  color: #1a1a1a;
   font-size: 16px;
+  caret-color: #1a1a1a;
 
   &::placeholder {
     color: #8F8F8F;
@@ -34,12 +36,13 @@ const SearchInput = styled.input`
 
 const SearchIcon = styled.img`
   position: absolute;
-  left: 12px;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   pointer-events: none;
+  z-index: 1;
 `;
 
 const ResultsList = styled.ul`

@@ -84,6 +84,7 @@ const WinStreak = styled.div`
   span.number {
     color: #ABE700;
     font-weight: bold;
+    margin-left: 8px;
   }
 
   span.text {
@@ -92,18 +93,35 @@ const WinStreak = styled.div`
 
   &::before {
     content: "*";
-    font-size: 32px;
+    font-size: 48px;
     line-height: 1;
     color: white;
   }
 `;
 
 const ClubInfo = styled.div`
-  font-size: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+`;
+
+const ClubRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 20px;
+`;
+
+const PlayedFor = styled.span`
+  font-size: 88px;
+  font-weight: 900;
+`;
+
+const AndFor = styled.span`
+  font-size: 88px;
+  font-weight: 300;
+  font-style: italic;
 `;
 
 const ClubLogo = styled.div`
@@ -201,19 +219,23 @@ function App() {
 
         <InfoSection>
           <WinStreak>
+            <span className="text">серия побед:</span>
             <span className="number">{winStreak}</span>
-            <span className="text">серия побед</span>
           </WinStreak>
 
           <ClubInfo>
-            Играл за
-            <ClubLogo>
-              <img src={`/images/${currentClubs[0].logoFile}`} alt={currentClubs[0].name} />
-            </ClubLogo>
-            и за
-            <ClubLogo>
-              <img src={`/images/${currentClubs[1].logoFile}`} alt={currentClubs[1].name} />
-            </ClubLogo>
+            <ClubRow>
+              <PlayedFor>Играл за</PlayedFor>
+              <ClubLogo>
+                <img src={`/images/${currentClubs[0].logoFile}`} alt={currentClubs[0].name} />
+              </ClubLogo>
+            </ClubRow>
+            <ClubRow>
+              <AndFor>и за</AndFor>
+              <ClubLogo>
+                <img src={`/images/${currentClubs[1].logoFile}`} alt={currentClubs[1].name} />
+              </ClubLogo>
+            </ClubRow>
           </ClubInfo>
         </InfoSection>
       </MainContent>
