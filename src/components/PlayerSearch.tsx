@@ -89,38 +89,28 @@ interface PlayerSearchProps {
   onSelect: (result: SearchResult) => void;
 }
 
-// Карта замен букв для более лояльного поиска
+// Карта замен букв для более лояльного поиска (уменьшенная версия)
 const letterEquivalents: { [key: string]: string[] } = {
-  'е': ['ё', 'э'],
-  'ё': ['е', 'э'],
-  'э': ['е', 'ё'],
-  'и': ['й', 'ы'],
+  'е': ['ё'],  // Оставляем только самые важные замены
+  'ё': ['е'],
   'й': ['и'],
-  'ы': ['и'],
-  'а': ['я'],
-  'я': ['а'],
-  'у': ['ю'],
-  'ю': ['у']
+  'и': ['й']
 };
 
-// Функция для создания всех возможных вариантов написания
+// Оптимизированная функция для создания вариантов
 const generateVariants = (text: string): string[] => {
   const variants = new Set([text]);
   
-  // Проходим по каждой букве в тексте
+  // Создаем только один уровень замен
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     const equivalents = letterEquivalents[char];
     
     if (equivalents) {
-      // Для каждого эквивалента создаем новый вариант
-      const currentVariants = Array.from(variants);
-      currentVariants.forEach(variant => {
-        equivalents.forEach(equivalent => {
-          variants.add(
-            variant.slice(0, i) + equivalent + variant.slice(i + 1)
-          );
-        });
+      equivalents.forEach(equivalent => {
+        variants.add(
+          text.slice(0, i) + equivalent + text.slice(i + 1)
+        );
       });
     }
   }
@@ -128,65 +118,45 @@ const generateVariants = (text: string): string[] => {
   return Array.from(variants);
 };
 
-// Функция для нормализации текста
+// Оптимизированная функция для нормализации текста
 const normalizeText = (text: string): string => {
-  const normalized = text
+  return text
     .toLowerCase()
-    // Базовая нормализация
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '') // Удаляем диакритические знаки
-    // Стандартизация имен
-    .replace(/^([а-яё])/i, letter => letter.toUpperCase()) // Первая буква заглавная
-    .replace(/[^a-zа-яё0-9\s-]/g, '') // Оставляем только буквы, цифры, пробелы и дефис
+    .replace(/ё/g, 'е') // Сразу заменяем ё на е
     .replace(/\s+/g, ' ') // Убираем множественные пробелы
     .trim();
-
-  return normalized;
 };
 
-// Функция для проверки инициалов
+// Упрощенная функция для проверки инициалов
 const matchesWithInitials = (fullName: string, searchTerm: string): boolean => {
+  if (searchTerm.length < 2) return false;
+  
   const parts = fullName.split(' ');
   if (parts.length < 2) return false;
 
-  // Получаем инициалы
-  const initials = parts.map(part => part[0]).join('');
-  const searchInitials = searchTerm.replace(/\s+/g, '');
+  const initials = parts.map(part => part[0]).join('').toLowerCase();
+  const searchInitials = searchTerm.replace(/\s+/g, '').toLowerCase();
 
-  return initials.toLowerCase().includes(searchInitials.toLowerCase());
+  return initials.startsWith(searchInitials);
 };
 
-// Функция для вычисления расстояния Левенштейна (для нечеткого поиска)
-const levenshteinDistance = (a: string, b: string): number => {
-  if (a.length === 0) return b.length;
-  if (b.length === 0) return a.length;
-
-  const matrix = Array(b.length + 1).fill(null).map(() => 
-    Array(a.length + 1).fill(null)
-  );
-
-  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
-  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
-
-  for (let j = 1; j <= b.length; j++) {
-    for (let i = 1; i <= a.length; i++) {
-      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1, // удаление
-        matrix[j - 1][i] + 1, // вставка
-        matrix[j - 1][i - 1] + substitutionCost // замена
-      );
-    }
-  }
-
-  return matrix[b.length][a.length];
-};
-
-// Функция для определения схожести строк (в процентах)
+// Упрощенная функция для определения схожести строк
 const calculateSimilarity = (a: string, b: string): number => {
-  const distance = levenshteinDistance(a, b);
-  const maxLength = Math.max(a.length, b.length);
-  return (1 - distance / maxLength) * 100;
+  if (a.includes(b)) return 100;
+  if (b.includes(a)) return 90;
+  
+  // Проверяем начало слова
+  if (a.startsWith(b)) return 85;
+  
+  // Простая проверка на количество совпадающих символов
+  let matches = 0;
+  const minLength = Math.min(a.length, b.length);
+  
+  for (let i = 0; i < minLength; i++) {
+    if (a[i] === b[i]) matches++;
+  }
+  
+  return (matches / Math.max(a.length, b.length)) * 100;
 };
 
 export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
@@ -212,47 +182,29 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
         const filtered = players
           .map(player => {
             const normalizedName = normalizeText(player.name);
-            const nameVariants = generateVariants(normalizedName);
             
-            // Проверяем различные варианты соответствия
-            const exactMatch = nameVariants.some(variant =>
-              searchVariants.some(searchVariant => variant.includes(searchVariant))
+            // Проверяем точное совпадение
+            const exactMatch = searchVariants.some(variant => 
+              normalizedName.includes(variant)
             );
             
-            const initialsMatch = matchesWithInitials(normalizedName, normalizedSearchTerm);
+            // Проверяем инициалы только если нет точного совпадения
+            const initialsMatch = !exactMatch && 
+              matchesWithInitials(normalizedName, normalizedSearchTerm);
             
-            // Вычисляем наилучшее соответствие среди всех вариантов
-            let bestSimilarity = 0;
-            nameVariants.forEach(nameVariant => {
-              searchVariants.forEach(searchVariant => {
-                const similarity = calculateSimilarity(nameVariant, searchVariant);
-                bestSimilarity = Math.max(bestSimilarity, similarity);
-              });
-            });
+            // Вычисляем схожесть только если нет других совпадений
+            const similarity = !exactMatch && !initialsMatch ? 
+              calculateSimilarity(normalizedName, normalizedSearchTerm) : 0;
 
             return {
               player,
-              similarity: exactMatch ? 100 : initialsMatch ? 90 : bestSimilarity,
+              similarity: exactMatch ? 100 : initialsMatch ? 90 : similarity,
               matchType: (exactMatch ? 'exact' : initialsMatch ? 'initials' : 'fuzzy') as MatchType
             };
           })
-          .filter(result => {
-            // Показываем результаты с высокой схожестью или совпадением по инициалам
-            return result.similarity >= 60;
-          })
-          .sort((a, b) => {
-            // Сортируем сначала по типу совпадения, затем по схожести
-            if (a.matchType !== b.matchType) {
-              const typeOrder: Record<MatchType, number> = {
-                exact: 0,
-                initials: 1,
-                fuzzy: 2
-              };
-              return typeOrder[a.matchType] - typeOrder[b.matchType];
-            }
-            return b.similarity - a.similarity;
-          })
-          .slice(0, 10);
+          .filter(result => result.similarity >= 70) // Повышаем порог схожести
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, 7); // Уменьшаем количество результатов
 
         setResults(filtered);
       } catch (error) {
@@ -261,7 +213,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
       }
     };
 
-    const timeoutId = setTimeout(searchPlayers, 300);
+    const timeoutId = setTimeout(searchPlayers, 200); // Уменьшаем задержку
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
