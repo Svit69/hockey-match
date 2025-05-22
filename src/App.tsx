@@ -111,7 +111,9 @@ function App() {
 
   const getRandomClubs = () => {
     const shuffled = [...clubs].sort(() => 0.5 - Math.random());
-    return [shuffled[0], shuffled[1]] as [Club, Club];
+    const selectedClubs = [shuffled[0], shuffled[1]] as [Club, Club];
+    console.log('Случайные клубы:', selectedClubs.map(club => club.logoFile.replace('.png', '')));
+    return selectedClubs;
   };
 
   useEffect(() => {
@@ -119,22 +121,29 @@ function App() {
   }, []);
 
   const handlePlayerSelect = (result: SearchResult) => {
-    const playerTeams = result.player.teams;
-    const currentClubNames = [
-      currentClubs[0].logoFile.replace('.png', ''),
-      currentClubs[1].logoFile.replace('.png', '')
-    ];
+    // Получаем массив команд игрока, разделяя их по "/"
+    const playerTeams = result.player.teams.flatMap(teamStr => teamStr.split('/').map(team => team.trim()));
+    console.log('Команды игрока:', playerTeams);
+
+    const currentClubNames = currentClubs.map(club => club.logoFile.replace('.png', ''));
+    console.log('Нужно найти команды:', currentClubNames);
 
     // Проверяем, играл ли игрок за оба клуба
     const playedForBothClubs = currentClubNames.every(clubName =>
-      playerTeams.some(team => team.includes(clubName))
+      playerTeams.some(team => team === clubName)
     );
 
     if (playedForBothClubs) {
-      // Если играл за оба клуба, увеличиваем серию побед
+      console.log('✅ ПРАВИЛЬНО! Игрок действительно играл за оба клуба');
       setWinStreak(prev => prev + 1);
     } else {
-      // Если не играл хотя бы за один клуб, обнуляем серию
+      console.log('❌ НЕПРАВИЛЬНО! Игрок не играл за оба этих клуба');
+      // Выводим, за какие клубы не играл
+      currentClubNames.forEach(clubName => {
+        if (!playerTeams.some(team => team === clubName)) {
+          console.log(`Игрок не играл за: ${clubName}`);
+        }
+      });
       setWinStreak(0);
     }
 
