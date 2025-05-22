@@ -4,7 +4,10 @@ export interface Player {
   // Добавьте другие поля, которые есть в вашем CSV файле
 }
 
+export type MatchType = 'exact' | 'initials' | 'fuzzy';
+
 export interface SearchResult {
   player: Player;
-  matchType: 'name' | 'team';
+  similarity: number;
+  matchType: MatchType;
 } 
