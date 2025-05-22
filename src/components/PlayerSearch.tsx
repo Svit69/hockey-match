@@ -8,18 +8,38 @@ const SearchContainer = styled.div`
   max-width: 400px;
 `;
 
+const SearchWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  background: url('/placeholder.svg') no-repeat;
+  background-size: cover;
+`;
+
 const SearchInput = styled.input`
   width: 100%;
-  padding: 12px;
-  background: #2a2a2a;
+  padding: 12px 12px 12px 40px;
+  background: transparent;
   border: none;
-  border-radius: 4px;
   color: white;
   font-size: 16px;
 
   &::placeholder {
-    color: #888;
+    color: #8F8F8F;
   }
+
+  &:focus {
+    outline: none;
+  }
+`;
+
+const SearchIcon = styled.img`
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 `;
 
 const ResultsList = styled.ul`
@@ -104,12 +124,15 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
 
   return (
     <SearchContainer>
-      <SearchInput
-        type="text"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Поиск игрока"
-      />
+      <SearchWrapper>
+        <SearchIcon src="/search.svg" alt="Search" />
+        <SearchInput
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Поиск"
+        />
+      </SearchWrapper>
       {results.length > 0 && (
         <ResultsList>
           {results.map((result, index) => (

@@ -8,7 +8,7 @@ const AppContainer = styled.div`
   background-color: #1a1a1a;
   min-height: 100vh;
   color: white;
-  padding: 20px;
+  padding: 20px 40px;
 `;
 
 const Header = styled.header`
@@ -19,7 +19,7 @@ const Header = styled.header`
 `;
 
 const Logo = styled.img`
-  height: 40px;
+  height: 32px;
   width: auto;
 `;
 
@@ -77,6 +77,25 @@ const InfoSection = styled.div`
 const WinStreak = styled.div`
   font-size: 20px;
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span.number {
+    color: #ABE700;
+    font-weight: bold;
+  }
+
+  span.text {
+    font-weight: normal;
+  }
+
+  &::before {
+    content: "*";
+    font-size: 32px;
+    line-height: 1;
+    color: white;
+  }
 `;
 
 const ClubInfo = styled.div`
@@ -182,7 +201,8 @@ function App() {
 
         <InfoSection>
           <WinStreak>
-            <span>серия побед: {winStreak}</span>
+            <span className="number">{winStreak}</span>
+            <span className="text">серия побед</span>
           </WinStreak>
 
           <ClubInfo>
