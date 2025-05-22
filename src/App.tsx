@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { clubs, Club } from './types/clubs';
 import { PlayerSearch } from './components/PlayerSearch';
 import { SearchResult } from './types/players';
@@ -74,17 +74,38 @@ const InfoSection = styled.div`
   text-align: right;
 `;
 
+const popupAnimation = keyframes`
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-20px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+`;
+
 const WinStreak = styled.div`
   font-size: 20px;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 
   span.number {
-    color: #ABE700;
+    color: ${props => props.theme.streakColor};
     font-weight: bold;
     margin-left: 8px;
+    transition: color 0.3s ease;
   }
 
   span.text {
@@ -104,20 +125,23 @@ const WinStreak = styled.div`
   }
 `;
 
-const ClubInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
-  width: 100%;
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  transition: transform 0.1s ease-out;
-  cursor: default;
+const PlusOnePopup = styled.div`
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #ABE700;
+  color: white;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px;
+  animation: ${popupAnimation} 1s ease-out forwards;
+  z-index: 2;
+`;
 
-  &:hover {
-    transform: scale(1.05);
-  }
+const ClubInfo = styled.div`
+  flex: 1;
+  text-align: right;
 `;
 
 const ClubRow = styled.div`
@@ -171,6 +195,8 @@ function App() {
   const [winStreak, setWinStreak] = useState(0);
   const [currentClubs, setCurrentClubs] = useState<[Club, Club]>([clubs[0], clubs[1]]);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [showPlusOne, setShowPlusOne] = useState(false);
+  const [streakColor, setStreakColor] = useState('#ABE700');
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -213,38 +239,51 @@ function App() {
     setCurrentClubs(getRandomClubs());
   }, []);
 
-  const handlePlayerSelect = (result: SearchResult) => {
-    // Получаем массив команд игрока, разделяя их по "/" и очищая каждое название
+  const animateWinStreak = async (currentStreak: number) => {
+    setShowPlusOne(true);
+    setTimeout(() => setShowPlusOne(false), 1000);
+  };
+
+  const animateStreakReset = async (currentStreak: number) => {
+    setStreakColor('#E70000');
+    for (let i = currentStreak; i >= 0; i--) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setWinStreak(i);
+      if (i === 0) {
+        setStreakColor('#ABE700');
+      }
+    }
+  };
+
+  const handlePlayerSelect = async (result: SearchResult) => {
     const playerTeams = result.player.teams
       .flatMap(teamStr => teamStr.split('/'))
       .map(team => cleanTeamName(team))
-      .filter(team => team !== ''); // Удаляем пустые строки
+      .filter(team => team !== '');
 
     console.log('Команды игрока (очищенные):', playerTeams);
-
     const currentClubNames = currentClubs.map(club => club.name);
     console.log('Нужно найти команды:', currentClubNames);
 
-    // Проверяем, играл ли игрок за оба клуба
     const playedForBothClubs = currentClubNames.every(clubName =>
       playerTeams.some(team => cleanTeamName(team) === clubName)
     );
 
     if (playedForBothClubs) {
       console.log('✅ ПРАВИЛЬНО! Игрок действительно играл за оба клуба');
-      setWinStreak(prev => prev + 1);
+      const newStreak = winStreak + 1;
+      await animateWinStreak(winStreak);
+      setWinStreak(newStreak);
     } else {
       console.log('❌ НЕПРАВИЛЬНО! Игрок не играл за оба этих клуба');
-      // Выводим, за какие клубы не играл
       currentClubNames.forEach(clubName => {
         if (!playerTeams.some(team => cleanTeamName(team) === clubName)) {
           console.log(`Игрок не играл за: ${clubName}`);
         }
       });
-      setWinStreak(0);
+      await animateStreakReset(winStreak);
     }
 
-    // Генерируем новые случайные клубы
     setCurrentClubs(getRandomClubs());
   };
 
@@ -266,9 +305,10 @@ function App() {
         </SearchSection>
 
         <InfoSection>
-          <WinStreak>
+          <WinStreak theme={{ streakColor }}>
             <span className="text">серия побед:</span>
             <span className="number">{winStreak}</span>
+            {showPlusOne && <PlusOnePopup>+1</PlusOnePopup>}
           </WinStreak>
 
           <ClubInfo>
