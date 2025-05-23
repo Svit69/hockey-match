@@ -344,8 +344,8 @@ function parseCSV(csv: string): Player[] {
     return {
       name: values[headers.indexOf('name')].trim(),
       teams: values[headers.indexOf('teams')].split(';').map(team => team.trim()),
-      played_in_nhl: values[headers.indexOf('played_in_nhl')].toLowerCase() === 'true',
-      gagarin_cup: values[headers.indexOf('gagarin_cup')].toLowerCase() === 'true'
+      played_in_nhl: values[headers.indexOf('played_in_nhl')] === 'ИСТИНА',
+      gagarin_cup: values[headers.indexOf('gagarin_cup')] === 'ИСТИНА'
     };
   });
 } 

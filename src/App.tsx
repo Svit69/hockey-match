@@ -239,8 +239,8 @@ const PlayedFor = styled.span`
 
 const AndFor = styled.span<{ variant: TaskVariant }>`
   font-size: 88px;
-  font-weight: ${props => props.variant.type === 'club' ? 300 : 900};
-  font-style: ${props => props.variant.type === 'club' ? 'italic' : 'normal'};
+  font-weight: 300;
+  font-style: italic;
 
   @media (max-width: 768px) {
     font-size: 64px;
@@ -281,7 +281,7 @@ const ClubLogo = styled.div`
 const SecondLogo = styled.div<{ variant: TaskVariant }>`
   width: 80px;
   height: 80px;
-  background: ${props => props.variant.type !== 'club' ? 'transparent' : '#333'};
+  background: #333;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -352,7 +352,7 @@ function App() {
       // Случайный клуб
       { 
         type: 'club', 
-        logoFile: clubs[Math.floor(Math.random() * clubs.length)].logoFile,
+        logoFile: clubs[Math.floor(Math.random() * clubs.length)].logoFile || 'placeholder.svg',
         name: clubs[Math.floor(Math.random() * clubs.length)].name
       },
       // НХЛ
@@ -370,7 +370,8 @@ function App() {
     ];
 
     // Выбираем случайный первый клуб
-    const firstClub = clubs[Math.floor(Math.random() * clubs.length)].name;
+    const firstClubIndex = Math.floor(Math.random() * clubs.length);
+    const firstClub = clubs[firstClubIndex].name;
     
     // Выбираем случайный вариант для второй части
     const secondVariant = variants[Math.floor(Math.random() * variants.length)];
