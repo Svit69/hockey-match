@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { clubs, Club } from './types/clubs';
 import { PlayerSearch } from './components/PlayerSearch';
-import { SearchResult } from './types/players';
+import { SearchResult, TaskVariant, Task, Player } from './types/players';
 
 const AppContainer = styled.div`
   background-color: #1a1a1a;
@@ -237,10 +237,10 @@ const PlayedFor = styled.span`
   }
 `;
 
-const AndFor = styled.span`
+const AndFor = styled.span<{ variant: TaskVariant }>`
   font-size: 88px;
-  font-weight: 300;
-  font-style: italic;
+  font-weight: ${props => props.variant.type === 'club' ? 300 : 900};
+  font-style: ${props => props.variant.type === 'club' ? 'italic' : 'normal'};
 
   @media (max-width: 768px) {
     font-size: 64px;
@@ -278,10 +278,40 @@ const ClubLogo = styled.div`
   }
 `;
 
+const SecondLogo = styled.div<{ variant: TaskVariant }>`
+  width: 80px;
+  height: 80px;
+  background: ${props => props.variant.type !== 'club' ? 'transparent' : '#333'};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  @media (max-width: 768px) {
+    width: 60px;
+    height: 60px;
+  }
+
+  @media (max-width: 480px) {
+    width: 48px;
+    height: 48px;
+  }
+`;
+
 function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [winStreak, setWinStreak] = useState(0);
-  const [currentClubs, setCurrentClubs] = useState<[Club, Club]>([clubs[0], clubs[1]]);
+  const [currentTask, setCurrentTask] = useState<Task>({
+    firstClub: clubs[0].name,
+    secondVariant: { type: 'club', logoFile: clubs[1].logoFile, name: clubs[1].name }
+  });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [streakColor, setStreakColor] = useState('#ABE700');
@@ -317,15 +347,47 @@ function App() {
       .trim();               // Убираем пробелы в начале и конце
   };
 
-  const getRandomClubs = () => {
-    const shuffled = [...clubs].sort(() => 0.5 - Math.random());
-    const selectedClubs = [shuffled[0], shuffled[1]] as [Club, Club];
-    console.log('Случайные клубы:', selectedClubs.map(club => club.name));
-    return selectedClubs;
+  const generateRandomTask = (): Task => {
+    const variants: TaskVariant[] = [
+      // Случайный клуб
+      { 
+        type: 'club', 
+        logoFile: clubs[Math.floor(Math.random() * clubs.length)].logoFile,
+        name: clubs[Math.floor(Math.random() * clubs.length)].name
+      },
+      // НХЛ
+      { 
+        type: 'nhl',
+        logoFile: 'nhl.png',
+        name: 'NHL'
+      },
+      // Кубок Гагарина
+      { 
+        type: 'gagarin',
+        logoFile: 'gagarin.png',
+        name: 'Gagarin Cup'
+      }
+    ];
+
+    // Выбираем случайный первый клуб
+    const firstClub = clubs[Math.floor(Math.random() * clubs.length)].name;
+    
+    // Выбираем случайный вариант для второй части
+    const secondVariant = variants[Math.floor(Math.random() * variants.length)];
+    
+    // Если выбран клуб, убеждаемся что он отличается от первого
+    if (secondVariant.type === 'club' && secondVariant.name === firstClub) {
+      return generateRandomTask();
+    }
+
+    return {
+      firstClub,
+      secondVariant
+    };
   };
 
   useEffect(() => {
-    setCurrentClubs(getRandomClubs());
+    setCurrentTask(generateRandomTask());
   }, []);
 
   const animateWinStreak = async () => {
@@ -348,6 +410,29 @@ function App() {
     setStreakColor('#ABE700');
   };
 
+  const checkPlayerMatch = (playerTeams: string[], task: Task, player: Player): boolean => {
+    // Проверяем, играл ли за первый клуб
+    const playedForFirstClub = playerTeams.some(team => 
+      cleanTeamName(team) === task.firstClub
+    );
+
+    if (!playedForFirstClub) return false;
+
+    // Проверяем второй вариант в зависимости от типа
+    switch (task.secondVariant.type) {
+      case 'club':
+        return playerTeams.some(team => 
+          cleanTeamName(team) === task.secondVariant.name
+        );
+      case 'nhl':
+        return player.played_in_nhl;
+      case 'gagarin':
+        return player.gagarin_cup;
+      default:
+        return false;
+    }
+  };
+
   const handlePlayerSelect = async (result: SearchResult) => {
     const playerTeams = result.player.teams
       .flatMap(teamStr => teamStr.split('/'))
@@ -355,27 +440,32 @@ function App() {
       .filter(team => team !== '');
 
     console.log('Команды игрока (очищенные):', playerTeams);
-    const currentClubNames = currentClubs.map(club => club.name);
-    console.log('Нужно найти команды:', currentClubNames);
+    console.log('Текущая задача:', currentTask);
 
-    const playedForBothClubs = currentClubNames.every(clubName =>
-      playerTeams.some(team => cleanTeamName(team) === clubName)
-    );
+    const isCorrect = checkPlayerMatch(playerTeams, currentTask, result.player);
 
-    if (playedForBothClubs) {
-      console.log('✅ ПРАВИЛЬНО! Игрок действительно играл за оба клуба');
+    if (isCorrect) {
+      console.log('✅ ПРАВИЛЬНО!');
       await animateWinStreak();
     } else {
-      console.log('❌ НЕПРАВИЛЬНО! Игрок не играл за оба этих клуба');
-      currentClubNames.forEach(clubName => {
-        if (!playerTeams.some(team => cleanTeamName(team) === clubName)) {
-          console.log(`Игрок не играл за: ${clubName}`);
-        }
-      });
+      console.log('❌ НЕПРАВИЛЬНО!');
       await animateStreakReset(winStreak);
     }
 
-    setCurrentClubs(getRandomClubs());
+    setCurrentTask(generateRandomTask());
+  };
+
+  const getSecondText = (variant: TaskVariant): string => {
+    switch (variant.type) {
+      case 'club':
+        return 'и за';
+      case 'nhl':
+        return 'и играл в';
+      case 'gagarin':
+        return 'и выигрывал';
+      default:
+        return 'и за';
+    }
   };
 
   return (
@@ -415,14 +505,22 @@ function App() {
               <ClubRow>
                 <PlayedFor>Играл за</PlayedFor>
                 <ClubLogo>
-                  <img src={`/images/${currentClubs[0].logoFile}`} alt={currentClubs[0].name} />
+                  <img 
+                    src={`/images/${clubs.find(c => c.name === currentTask.firstClub)?.logoFile}`} 
+                    alt={currentTask.firstClub} 
+                  />
                 </ClubLogo>
               </ClubRow>
               <ClubRow>
-                <AndFor>и за</AndFor>
-                <ClubLogo>
-                  <img src={`/images/${currentClubs[1].logoFile}`} alt={currentClubs[1].name} />
-                </ClubLogo>
+                <AndFor variant={currentTask.secondVariant}>
+                  {getSecondText(currentTask.secondVariant)}
+                </AndFor>
+                <SecondLogo variant={currentTask.secondVariant}>
+                  <img 
+                    src={`/images/${currentTask.secondVariant.logoFile}`} 
+                    alt={currentTask.secondVariant.name} 
+                  />
+                </SecondLogo>
               </ClubRow>
             </TiltContainer>
           </ClubInfo>
