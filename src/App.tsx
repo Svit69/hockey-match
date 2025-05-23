@@ -166,11 +166,19 @@ const ClubRow = styled.div`
   }
 `;
 
-const TiltContainer = styled.div<{ rotateX: number; rotateY: number }>`
-  transform: rotateX(${props => props.rotateX}deg) rotateY(${props => props.rotateY}deg);
+const TiltContainer = styled.div<{ rotateX: number; rotateY: number; isHovered: boolean }>`
+  transform: rotateX(${props => props.rotateX * (props.isHovered ? 2 : 1)}deg) 
+            rotateY(${props => props.rotateY * (props.isHovered ? 2 : 1)}deg);
   transform-style: preserve-3d;
   transition: transform 0.3s ease-out;
   width: 100%;
+  cursor: default;
+  
+  &:hover {
+    transform: rotateX(${props => props.rotateX * 2}deg) 
+              rotateY(${props => props.rotateY * 2}deg) 
+              scale(1.05);
+  }
 `;
 
 const PlayedFor = styled.span`
@@ -208,6 +216,7 @@ function App() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [streakColor, setStreakColor] = useState('#ABE700');
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -327,7 +336,13 @@ function App() {
           </WinStreak>
 
           <ClubInfo>
-            <TiltContainer rotateX={tilt.x} rotateY={tilt.y}>
+            <TiltContainer 
+              rotateX={tilt.x} 
+              rotateY={tilt.y} 
+              isHovered={isHovered}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+            >
               <ClubRow>
                 <PlayedFor>Играл за</PlayedFor>
                 <ClubLogo>

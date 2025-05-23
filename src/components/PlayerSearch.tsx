@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Player, SearchResult, MatchType } from '../types/players';
 
@@ -8,6 +8,11 @@ const SearchContainer = styled.div`
   max-width: 400px;
   transform-style: preserve-3d;
   perspective: 1000px;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    padding: 0 16px;
+  }
 `;
 
 const SearchWrapper = styled.div<{ isFocused: boolean }>`
@@ -20,6 +25,11 @@ const SearchWrapper = styled.div<{ isFocused: boolean }>`
   transform-style: preserve-3d;
   transition: transform 0.1s ease-out;
   transform: ${props => props.isFocused ? 'scale(1.05)' : 'scale(1)'};
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    transform: none;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -30,6 +40,8 @@ const SearchInput = styled.input`
   color: #1a1a1a;
   font-size: 16px;
   caret-color: #1a1a1a;
+  -webkit-appearance: none;
+  border-radius: 0;
 
   &::placeholder {
     color: #8F8F8F;
@@ -37,6 +49,11 @@ const SearchInput = styled.input`
 
   &:focus {
     outline: none;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    padding: 16px 16px 16px 48px;
   }
 `;
 
@@ -49,9 +66,31 @@ const SearchIcon = styled.img`
   height: 32px;
   pointer-events: none;
   z-index: 1;
+
+  @media (max-width: 768px) {
+    left: 8px;
+  }
 `;
 
-const ResultsList = styled.ul`
+const Backdrop = styled.div<{ isVisible: boolean }>`
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: ${props => props.isVisible ? 1 : 0};
+    visibility: ${props => props.isVisible ? 'visible' : 'hidden'};
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 999;
+  }
+`;
+
+const ResultsList = styled.ul<{ isVisible: boolean }>`
   position: absolute;
   top: 100%;
   left: 0;
@@ -65,6 +104,40 @@ const ResultsList = styled.ul`
   max-height: 300px;
   overflow-y: auto;
   z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 50vh;
+    border-radius: 16px 16px 0 0;
+    margin-top: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(${props => props.isVisible ? '0' : '100%'});
+    transition: transform 0.3s ease;
+  }
+
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+const DragHandle = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #3a3a3a;
+    border-radius: 2px;
+    margin: 12px auto;
+  }
 `;
 
 const ResultItem = styled.li`
@@ -79,10 +152,23 @@ const ResultItem = styled.li`
   &:hover {
     background: #3a3a3a;
   }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    
+    &:active {
+      background: #3a3a3a;
+    }
+  }
 `;
 
 const PlayerName = styled.div`
   font-weight: bold;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+    line-height: 1.4;
+  }
 `;
 
 interface PlayerSearchProps {
@@ -163,6 +249,10 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
+  const [isResultsVisible, setIsResultsVisible] = useState(false);
+  const resultsRef = useRef<HTMLUListElement>(null);
+  const touchStartY = useRef<number>(0);
+  const currentTranslateY = useRef<number>(0);
 
   useEffect(() => {
     const searchPlayers = async () => {
@@ -217,36 +307,88 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
+  useEffect(() => {
+    setIsResultsVisible(results.length > 0);
+  }, [results]);
+
+  // Handle touch events for bottom sheet
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    if (resultsRef.current) {
+      currentTranslateY.current = 0;
+      resultsRef.current.style.transition = 'none';
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!resultsRef.current) return;
+    
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    if (deltaY < 0) return; // Prevent pulling up
+    
+    currentTranslateY.current = deltaY;
+    resultsRef.current.style.transform = `translateY(${deltaY}px)`;
+  };
+
+  const handleTouchEnd = () => {
+    if (!resultsRef.current) return;
+    
+    resultsRef.current.style.transition = 'transform 0.3s ease';
+    if (currentTranslateY.current > 100) {
+      // Dismiss if pulled down more than 100px
+      setResults([]);
+      setIsResultsVisible(false);
+    } else {
+      resultsRef.current.style.transform = 'translateY(0)';
+    }
+  };
+
+  const handleBackdropClick = () => {
+    setResults([]);
+    setIsResultsVisible(false);
+  };
+
   const handleSelect = (result: SearchResult) => {
     onSelect(result);
     setSearchTerm('');
     setResults([]);
     setIsFocused(false);
+    setIsResultsVisible(false);
   };
 
   return (
-    <SearchContainer>
-      <SearchWrapper isFocused={isFocused}>
-        <SearchIcon src="/search.svg" alt="Search" />
-        <SearchInput
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => !searchTerm && setIsFocused(false)}
-          placeholder="Поиск"
-        />
-      </SearchWrapper>
-      {results.length > 0 && (
-        <ResultsList>
-          {results.map((result, index) => (
-            <ResultItem key={index} onClick={() => handleSelect(result)}>
-              <PlayerName>{result.player.name}</PlayerName>
-            </ResultItem>
-          ))}
-        </ResultsList>
-      )}
-    </SearchContainer>
+    <>
+      <Backdrop isVisible={isResultsVisible} onClick={handleBackdropClick} />
+      <SearchContainer>
+        <SearchWrapper isFocused={isFocused}>
+          <SearchIcon src="/search.svg" alt="Search" />
+          <SearchInput
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => !searchTerm && setIsFocused(false)}
+            placeholder="Поиск"
+          />
+        </SearchWrapper>
+        {results.length > 0 && (
+          <ResultsList
+            ref={resultsRef}
+            isVisible={isResultsVisible}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <DragHandle />
+            {results.map((result, index) => (
+              <ResultItem key={index} onClick={() => handleSelect(result)}>
+                <PlayerName>{result.player.name}</PlayerName>
+              </ResultItem>
+            ))}
+          </ResultsList>
+        )}
+      </SearchContainer>
+    </>
   );
 };
 
