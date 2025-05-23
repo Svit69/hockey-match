@@ -411,26 +411,52 @@ function App() {
   };
 
   const checkPlayerMatch = (playerTeams: string[], task: Task, player: Player): boolean => {
+    console.log('🎯 Текущая задача:', {
+      firstClub: task.firstClub,
+      secondVariant: {
+        type: task.secondVariant.type,
+        name: task.secondVariant.name
+      }
+    });
+
+    console.log('🏒 Данные игрока:', {
+      name: player.name,
+      teams: playerTeams,
+      played_in_nhl: player.played_in_nhl,
+      gagarin_cup: player.gagarin_cup
+    });
+
     // Проверяем, играл ли за первый клуб
     const playedForFirstClub = playerTeams.some(team => 
       cleanTeamName(team) === task.firstClub
     );
 
+    console.log(`✓ Играл за ${task.firstClub}:`, playedForFirstClub);
+
     if (!playedForFirstClub) return false;
 
     // Проверяем второй вариант в зависимости от типа
+    let secondConditionMet = false;
+    
     switch (task.secondVariant.type) {
       case 'club':
-        return playerTeams.some(team => 
+        secondConditionMet = playerTeams.some(team => 
           cleanTeamName(team) === task.secondVariant.name
         );
+        console.log(`✓ Играл за ${task.secondVariant.name}:`, secondConditionMet);
+        break;
       case 'nhl':
-        return player.played_in_nhl;
+        secondConditionMet = player.played_in_nhl;
+        console.log('✓ Играл в НХЛ:', secondConditionMet);
+        break;
       case 'gagarin':
-        return player.gagarin_cup;
-      default:
-        return false;
+        secondConditionMet = player.gagarin_cup;
+        console.log('✓ Выигрывал Кубок Гагарина:', secondConditionMet);
+        break;
     }
+
+    console.log('🎮 Итоговый результат:', secondConditionMet);
+    return secondConditionMet;
   };
 
   const handlePlayerSelect = async (result: SearchResult) => {
@@ -439,8 +465,8 @@ function App() {
       .map(team => cleanTeamName(team))
       .filter(team => team !== '');
 
-    console.log('Команды игрока (очищенные):', playerTeams);
-    console.log('Текущая задача:', currentTask);
+    console.log('\n📊 ПРОВЕРКА ОТВЕТА');
+    console.log('------------------');
 
     const isCorrect = checkPlayerMatch(playerTeams, currentTask, result.player);
 

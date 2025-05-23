@@ -247,7 +247,13 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
       try {
         const response = await fetch('/players.csv');
         const text = await response.text();
+        
+        console.log('\n📑 ЗАГРУЗКА ДАННЫХ');
+        console.log('------------------');
+        
         const players = parseCSV(text);
+        console.log('Загружено игроков:', players.length);
+        console.log('Пример данных:', players[0]);
         
         const normalizedSearchTerm = normalizeText(searchTerm);
         const searchVariants = generateVariants(normalizedSearchTerm);
@@ -275,13 +281,14 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
               matchType: (exactMatch ? 'exact' : initialsMatch ? 'initials' : 'fuzzy') as MatchType
             };
           })
-          .filter(result => result.similarity >= 70) // Повышаем порог схожести
+          .filter(result => result.similarity >= 70)
           .sort((a, b) => b.similarity - a.similarity)
-          .slice(0, 7); // Уменьшаем количество результатов
+          .slice(0, 7);
 
+        console.log('Найдено совпадений:', filtered.length);
         setResults(filtered);
       } catch (error) {
-        console.error('Error searching players:', error);
+        console.error('Ошибка при поиске игроков:', error);
         setResults([]);
       }
     };
