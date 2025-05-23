@@ -11,7 +11,8 @@ const SearchContainer = styled.div`
 
   @media (max-width: 768px) {
     max-width: 100%;
-    padding: 0 16px;
+    padding: 0;
+    margin: 0 auto;
   }
 `;
 
@@ -29,6 +30,7 @@ const SearchWrapper = styled.div<{ isFocused: boolean }>`
   @media (max-width: 768px) {
     margin-left: 0;
     transform: none;
+    background-size: 100% 100%;
   }
 `;
 
@@ -42,6 +44,7 @@ const SearchInput = styled.input`
   caret-color: #1a1a1a;
   -webkit-appearance: none;
   border-radius: 0;
+  box-sizing: border-box;
 
   &::placeholder {
     color: #8F8F8F;
@@ -52,8 +55,9 @@ const SearchInput = styled.input`
   }
 
   @media (max-width: 768px) {
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px;
     padding: 16px 16px 16px 48px;
+    width: 100%;
   }
 `;
 

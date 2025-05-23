@@ -9,6 +9,10 @@ const AppContainer = styled.div`
   min-height: 100vh;
   color: white;
   padding: 20px 40px;
+
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
 `;
 
 const Header = styled.header`
@@ -48,10 +52,17 @@ const MainContent = styled.main`
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 40px;
+    padding: 0 16px;
+  }
 `;
 
 const SearchSection = styled.div`
   flex: 1;
+  width: 100%;
 `;
 
 const SearchInput = styled.input`
@@ -72,6 +83,11 @@ const SearchInput = styled.input`
 const InfoSection = styled.div`
   flex: 1;
   text-align: right;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    text-align: center;
+  }
 `;
 
 const popupAnimation = keyframes`
@@ -160,9 +176,19 @@ const ClubRow = styled.div`
   align-items: center;
   gap: 20px;
   width: 100%;
+  justify-content: flex-end;
 
   &:last-child {
     margin-top: -10px;
+  }
+
+  @media (max-width: 768px) {
+    justify-content: center;
+    gap: 12px;
+    
+    &:last-child {
+      margin-top: 0;
+    }
   }
 `;
 
@@ -184,12 +210,28 @@ const TiltContainer = styled.div<{ rotateX: number; rotateY: number; isHovered: 
 const PlayedFor = styled.span`
   font-size: 88px;
   font-weight: 900;
+
+  @media (max-width: 768px) {
+    font-size: 48px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 36px;
+  }
 `;
 
 const AndFor = styled.span`
   font-size: 88px;
   font-weight: 300;
   font-style: italic;
+
+  @media (max-width: 768px) {
+    font-size: 48px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 36px;
+  }
 `;
 
 const ClubLogo = styled.div`
@@ -206,6 +248,16 @@ const ClubLogo = styled.div`
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  @media (max-width: 768px) {
+    width: 60px;
+    height: 60px;
+  }
+
+  @media (max-width: 480px) {
+    width: 48px;
+    height: 48px;
   }
 `;
 
