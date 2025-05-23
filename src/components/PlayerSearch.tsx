@@ -90,7 +90,8 @@ const Backdrop = styled.div<{ isVisible: boolean }>`
     opacity: ${props => props.isVisible ? 1 : 0};
     visibility: ${props => props.isVisible ? 'visible' : 'hidden'};
     transition: opacity 0.3s ease, visibility 0.3s ease;
-    z-index: 999;
+    z-index: 1000;
+    pointer-events: ${props => props.isVisible ? 'auto' : 'none'};
   }
 `;
 
@@ -122,6 +123,7 @@ const ResultsList = styled.ul<{ isVisible: boolean }>`
     padding-bottom: env(safe-area-inset-bottom);
     transform: translateY(${props => props.isVisible ? '0' : '100%'});
     transition: transform 0.3s ease;
+    z-index: 1001;
   }
 
   -webkit-overflow-scrolling: touch;
@@ -148,6 +150,8 @@ const ResultItem = styled.li`
   padding: 12px;
   cursor: pointer;
   border-bottom: 1px solid #3a3a3a;
+  position: relative;
+  z-index: 1002;
 
   &:last-child {
     border-bottom: none;

@@ -55,7 +55,7 @@ const MainContent = styled.main`
 
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 40px;
+    gap: 32px;
     padding: 0 16px;
   }
 `;
@@ -63,6 +63,10 @@ const MainContent = styled.main`
 const SearchSection = styled.div`
   flex: 1;
   width: 100%;
+
+  @media (max-width: 768px) {
+    order: 3;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -86,7 +90,8 @@ const InfoSection = styled.div`
 
   @media (max-width: 768px) {
     width: 100%;
-    text-align: center;
+    text-align: left;
+    order: 2;
   }
 `;
 
@@ -124,6 +129,14 @@ const WinStreak = styled.div<WinStreakProps>`
   align-items: center;
   gap: 8px;
   position: relative;
+  justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-bottom: 32px;
+    justify-content: flex-start;
+    order: 1;
+  }
 
   span.number {
     color: ${props => props.$streakColor};
@@ -147,6 +160,10 @@ const WinStreak = styled.div<WinStreakProps>`
     display: flex;
     align-items: center;
     margin-right: 4px;
+
+    @media (max-width: 768px) {
+      font-size: 32px;
+    }
   }
 `;
 
@@ -183,11 +200,11 @@ const ClubRow = styled.div`
   }
 
   @media (max-width: 768px) {
-    justify-content: center;
-    gap: 12px;
+    justify-content: flex-start;
+    gap: 16px;
     
     &:last-child {
-      margin-top: 0;
+      margin-top: 8px;
     }
   }
 `;
@@ -212,11 +229,11 @@ const PlayedFor = styled.span`
   font-weight: 900;
 
   @media (max-width: 768px) {
-    font-size: 48px;
+    font-size: 64px;
   }
 
   @media (max-width: 480px) {
-    font-size: 36px;
+    font-size: 48px;
   }
 `;
 
@@ -226,11 +243,11 @@ const AndFor = styled.span`
   font-style: italic;
 
   @media (max-width: 768px) {
-    font-size: 48px;
+    font-size: 64px;
   }
 
   @media (max-width: 480px) {
-    font-size: 36px;
+    font-size: 48px;
   }
 `;
 
