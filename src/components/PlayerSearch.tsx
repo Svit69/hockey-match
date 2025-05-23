@@ -26,6 +26,7 @@ const SearchWrapper = styled.div<{ isFocused: boolean }>`
   transform-style: preserve-3d;
   transition: transform 0.1s ease-out;
   transform: ${props => props.isFocused ? 'scale(1.05)' : 'scale(1)'};
+  z-index: 1002;
 
   @media (max-width: 768px) {
     margin-left: 0;
@@ -45,6 +46,8 @@ const SearchInput = styled.input`
   -webkit-appearance: none;
   border-radius: 0;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1002;
 
   &::placeholder {
     color: #8F8F8F;
@@ -97,7 +100,7 @@ const Backdrop = styled.div<{ isVisible: boolean }>`
 
 const ResultsList = styled.ul<{ isVisible: boolean }>`
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   margin: 0;
@@ -105,25 +108,17 @@ const ResultsList = styled.ul<{ isVisible: boolean }>`
   list-style: none;
   background: #2a2a2a;
   border-radius: 4px;
-  margin-top: 4px;
   max-height: 300px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 1001;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
   @media (max-width: 768px) {
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 50vh;
-    border-radius: 16px 16px 0 0;
-    margin-top: 0;
-    padding-bottom: env(safe-area-inset-bottom);
-    transform: translateY(${props => props.isVisible ? '0' : '100%'});
-    transition: transform 0.3s ease;
-    z-index: 1001;
+    position: absolute;
+    top: calc(100% + 4px);
+    max-height: 60vh;
+    border-radius: 4px;
+    margin: 0 16px;
   }
 
   -webkit-overflow-scrolling: touch;
@@ -152,6 +147,8 @@ const ResultItem = styled.li`
   border-bottom: 1px solid #3a3a3a;
   position: relative;
   z-index: 1002;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  touch-action: manipulation;
 
   &:last-child {
     border-bottom: none;
@@ -261,6 +258,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
   const resultsRef = useRef<HTMLUListElement>(null);
   const touchStartY = useRef<number>(0);
   const currentTranslateY = useRef<number>(0);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const searchPlayers = async () => {
@@ -364,10 +362,24 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
     setIsResultsVisible(false);
   };
 
+  // Закрываем результаты при клике вне компонента
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setResults([]);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <>
       <Backdrop isVisible={isResultsVisible} onClick={handleBackdropClick} />
-      <SearchContainer>
+      <SearchContainer ref={searchContainerRef}>
         <SearchWrapper isFocused={isFocused}>
           <SearchIcon src="/search.svg" alt="Search" />
           <SearchInput
@@ -389,7 +401,11 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
           >
             <DragHandle />
             {results.map((result, index) => (
-              <ResultItem key={index} onClick={() => handleSelect(result)}>
+              <ResultItem 
+                key={index} 
+                onClick={() => handleSelect(result)}
+                onTouchEnd={() => handleSelect(result)}
+              >
                 <PlayerName>{result.player.name}</PlayerName>
               </ResultItem>
             ))}
