@@ -19,8 +19,8 @@ const SearchContainer = styled.div`
 const SearchWrapper = styled.div<{ isFocused: boolean }>`
   position: relative;
   width: 100%;
-  background: url('/placeholder.svg') no-repeat;
-  background-size: cover;
+  background: #2a2a2a;
+  border-radius: 4px;
   margin-left: 16px;
   cursor: text;
   transform-style: preserve-3d;
@@ -31,7 +31,6 @@ const SearchWrapper = styled.div<{ isFocused: boolean }>`
   @media (max-width: 768px) {
     margin-left: 0;
     transform: none;
-    background-size: 100% 100%;
   }
 `;
 
@@ -40,9 +39,9 @@ const SearchInput = styled.input`
   padding: 12px 12px 12px 48px;
   background: transparent;
   border: none;
-  color: #1a1a1a;
+  color: white;
   font-size: 16px;
-  caret-color: #1a1a1a;
+  caret-color: white;
   -webkit-appearance: none;
   border-radius: 0;
   box-sizing: border-box;
@@ -106,19 +105,6 @@ const ResultsList = styled.ul<{ isVisible: boolean }>`
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
-  }
-`;
-
-const DragHandle = styled.div`
-  display: none;
-
-  @media (max-width: 768px) {
-    display: block;
-    width: 40px;
-    height: 4px;
-    background: #3a3a3a;
-    border-radius: 2px;
-    margin: 12px auto;
   }
 `;
 
@@ -238,6 +224,20 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setResults([]);
+        setIsFocused(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
     const searchPlayers = async () => {
       if (searchTerm.length < 2) {
         setResults([]);
@@ -286,7 +286,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
       }
     };
 
-    const timeoutId = setTimeout(searchPlayers, 200); // Уменьшаем задержку
+    const timeoutId = setTimeout(searchPlayers, 200);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
@@ -337,6 +337,8 @@ function parseCSV(csv: string): Player[] {
     return {
       name: values[headers.indexOf('name')].trim(),
       teams: values[headers.indexOf('teams')].split(';').map(team => team.trim()),
+      played_in_nhl: values[headers.indexOf('played_in_nhl')].toLowerCase() === 'true',
+      gagarin_cup: values[headers.indexOf('gagarin_cup')].toLowerCase() === 'true'
     };
   });
 } 
