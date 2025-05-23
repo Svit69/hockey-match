@@ -359,12 +359,20 @@ function App() {
   };
 
   const generateRandomTask = (): Task => {
+    // Выбираем случайный первый клуб
+    const firstClubIndex = Math.floor(Math.random() * clubs.length);
+    const selectedFirstClub = clubs[firstClubIndex];
+
+    // Выбираем случайный второй клуб
+    const secondClubIndex = Math.floor(Math.random() * clubs.length);
+    const selectedSecondClub = clubs[secondClubIndex];
+    
     const variants: TaskVariant[] = [
-      // Случайный клуб
+      // Случайный клуб (используем выбранный второй клуб)
       { 
         type: 'club', 
-        logoFile: clubs[Math.floor(Math.random() * clubs.length)].logoFile || 'placeholder.svg',
-        name: clubs[Math.floor(Math.random() * clubs.length)].name
+        logoFile: selectedSecondClub.logoFile || 'placeholder.svg',
+        name: selectedSecondClub.name
       },
       // НХЛ
       { 
@@ -379,22 +387,18 @@ function App() {
         name: 'Gagarin Cup'
       }
     ];
-
-    // Выбираем случайный первый клуб
-    const firstClubIndex = Math.floor(Math.random() * clubs.length);
-    const selectedClub = clubs[firstClubIndex];
     
     // Выбираем случайный вариант для второй части
     const secondVariant = variants[Math.floor(Math.random() * variants.length)];
     
-    // Если выбран клуб, убеждаемся что он отличается от первого
-    if (secondVariant.type === 'club' && secondVariant.name === selectedClub.name) {
+    // Если выбран клуб, и он совпадает с первым, генерируем новое задание
+    if (secondVariant.type === 'club' && secondVariant.name === selectedFirstClub.name) {
       return generateRandomTask();
     }
 
     return {
-      firstClub: selectedClub.name,
-      firstClubLogo: selectedClub.logoFile || 'placeholder.svg',
+      firstClub: selectedFirstClub.name,
+      firstClubLogo: selectedFirstClub.logoFile || 'placeholder.svg',
       secondVariant
     };
   };
