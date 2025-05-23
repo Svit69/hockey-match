@@ -238,16 +238,16 @@ const PlayedFor = styled.span`
 `;
 
 const AndFor = styled.span<{ variant: TaskVariant }>`
-  font-size: 88px;
+  font-size: ${props => props.variant.type === 'gagarin' ? '72px' : '88px'};
   font-weight: 300;
   font-style: italic;
 
   @media (max-width: 768px) {
-    font-size: 64px;
+    font-size: ${props => props.variant.type === 'gagarin' ? '52px' : '64px'};
   }
 
   @media (max-width: 480px) {
-    font-size: 48px;
+    font-size: ${props => props.variant.type === 'gagarin' ? '40px' : '48px'};
   }
 `;
 
