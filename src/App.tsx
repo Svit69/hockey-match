@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { clubs, Club } from './types/clubs';
 import { PlayerSearch } from './components/PlayerSearch';
-import { SearchResult, TaskVariant, Task, Player } from './types/players';
+import { SearchResult, TaskVariant, Player } from './types/players';
 
 const AppContainer = styled.div`
   background-color: #1a1a1a;
@@ -305,12 +305,23 @@ const SecondLogo = styled.div<{ variant: TaskVariant }>`
   }
 `;
 
+export interface Task {
+  firstClub: string;
+  firstClubLogo: string;
+  secondVariant: TaskVariant;
+}
+
 function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [winStreak, setWinStreak] = useState(0);
   const [currentTask, setCurrentTask] = useState<Task>({
     firstClub: clubs[0].name,
-    secondVariant: { type: 'club', logoFile: clubs[1].logoFile, name: clubs[1].name }
+    firstClubLogo: clubs[0].logoFile || 'placeholder.svg',
+    secondVariant: { 
+      type: 'club', 
+      logoFile: clubs[1].logoFile || 'placeholder.svg', 
+      name: clubs[1].name 
+    }
   });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [showPlusOne, setShowPlusOne] = useState(false);
@@ -371,18 +382,19 @@ function App() {
 
     // Выбираем случайный первый клуб
     const firstClubIndex = Math.floor(Math.random() * clubs.length);
-    const firstClub = clubs[firstClubIndex].name;
+    const selectedClub = clubs[firstClubIndex];
     
     // Выбираем случайный вариант для второй части
     const secondVariant = variants[Math.floor(Math.random() * variants.length)];
     
     // Если выбран клуб, убеждаемся что он отличается от первого
-    if (secondVariant.type === 'club' && secondVariant.name === firstClub) {
+    if (secondVariant.type === 'club' && secondVariant.name === selectedClub.name) {
       return generateRandomTask();
     }
 
     return {
-      firstClub,
+      firstClub: selectedClub.name,
+      firstClubLogo: selectedClub.logoFile || 'placeholder.svg',
       secondVariant
     };
   };
@@ -533,7 +545,7 @@ function App() {
                 <PlayedFor>Играл за</PlayedFor>
                 <ClubLogo>
                   <img 
-                    src={`/images/${clubs.find(c => c.name === currentTask.firstClub)?.logoFile}`} 
+                    src={`/images/${currentTask.firstClubLogo}`} 
                     alt={currentTask.firstClub} 
                   />
                 </ClubLogo>
