@@ -225,21 +225,6 @@ const TiltContainer = styled.div<{ rotateX: number; rotateY: number; isHovered: 
               scale(1.08);
     filter: brightness(1.1);
   }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    border-radius: 8px;
-  }
-
-  &:hover::after {
-    opacity: ${props => props.isHovered ? 1 : 0};
-  }
 `;
 
 const PlayedFor = styled.span`
@@ -333,6 +318,7 @@ function App() {
   const [isMuted, setIsMuted] = useState(false);
   const { playWinSound, playLoseSound } = useSound(isMuted);
   const [winStreak, setWinStreak] = useState(0);
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
   const [currentTask, setCurrentTask] = useState<Task>({
     firstClub: clubs[0].name,
     firstClubLogo: clubs[0].logoFile || 'placeholder.svg',
@@ -536,6 +522,7 @@ function App() {
     if (isCorrect) {
       console.log('✅ ПРАВИЛЬНО!');
       playWinSound();
+      setSelectedPlayers(prev => new Set([...prev, result.player.name]));
       await animateWinStreak();
     } else {
       console.log('❌ НЕПРАВИЛЬНО!');
@@ -573,7 +560,10 @@ function App() {
 
       <MainContent>
         <SearchSection>
-          <PlayerSearch onSelect={handlePlayerSelect} />
+          <PlayerSearch 
+            onSelect={handlePlayerSelect} 
+            selectedPlayers={selectedPlayers}
+          />
         </SearchSection>
 
         <InfoSection>

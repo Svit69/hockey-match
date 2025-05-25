@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { Player, SearchResult, MatchType } from '../types/players';
 
 const SearchContainer = styled.div`
@@ -143,8 +143,24 @@ const PlayerName = styled.div`
   }
 `;
 
+const fadeOutAnimation = keyframes`
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+`;
+
+const AnimatedResultItem = styled(ResultItem)<{ isRemoving: boolean }>`
+  animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.3s ease-out forwards;
+`;
+
 interface PlayerSearchProps {
   onSelect: (result: SearchResult) => void;
+  selectedPlayers: Set<string>;
 }
 
 // Карта замен букв для более лояльного поиска (уменьшенная версия)
@@ -217,10 +233,11 @@ const calculateSimilarity = (a: string, b: string): number => {
   return (matches / Math.max(a.length, b.length)) * 100;
 };
 
-export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
+export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect, selectedPlayers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
+  const [removingPlayer, setRemovingPlayer] = useState<string | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -259,19 +276,17 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
         const searchVariants = generateVariants(normalizedSearchTerm);
         
         const filtered = players
+          .filter(player => !selectedPlayers.has(player.name)) // Фильтруем выбранных игроков
           .map(player => {
             const normalizedName = normalizeText(player.name);
             
-            // Проверяем точное совпадение
             const exactMatch = searchVariants.some(variant => 
               normalizedName.includes(variant)
             );
             
-            // Проверяем инициалы только если нет точного совпадения
             const initialsMatch = !exactMatch && 
               matchesWithInitials(normalizedName, normalizedSearchTerm);
             
-            // Вычисляем схожесть только если нет других совпадений
             const similarity = !exactMatch && !initialsMatch ? 
               calculateSimilarity(normalizedName, normalizedSearchTerm) : 0;
 
@@ -295,13 +310,16 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
 
     const timeoutId = setTimeout(searchPlayers, 200);
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, selectedPlayers]);
 
-  const handleSelect = (result: SearchResult) => {
+  const handleSelect = async (result: SearchResult) => {
+    setRemovingPlayer(result.player.name);
+    await new Promise(resolve => setTimeout(resolve, 300)); // Ждем завершения анимации
     onSelect(result);
     setSearchTerm('');
     setResults([]);
     setIsFocused(false);
+    setRemovingPlayer(null);
   };
 
   return (
@@ -320,13 +338,14 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect }) => {
       {results.length > 0 && (
         <ResultsList isVisible={true}>
           {results.map((result, index) => (
-            <ResultItem 
-              key={index} 
+            <AnimatedResultItem 
+              key={result.player.name}
               onClick={() => handleSelect(result)}
               onTouchEnd={() => handleSelect(result)}
+              isRemoving={removingPlayer === result.player.name}
             >
               <PlayerName>{result.player.name}</PlayerName>
-            </ResultItem>
+            </AnimatedResultItem>
           ))}
         </ResultsList>
       )}
