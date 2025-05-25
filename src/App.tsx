@@ -522,11 +522,16 @@ function App() {
     if (isCorrect) {
       console.log('✅ ПРАВИЛЬНО!');
       playWinSound();
-      setSelectedPlayers(prev => new Set([...prev, result.player.name]));
+      setSelectedPlayers(prev => {
+        const newSet = new Set(prev);
+        newSet.add(result.player.name);
+        return newSet;
+      });
       await animateWinStreak();
     } else {
       console.log('❌ НЕПРАВИЛЬНО!');
       playLoseSound();
+      setSelectedPlayers(new Set()); // Сбрасываем список выбранных игроков
       await animateStreakReset(winStreak);
     }
 
