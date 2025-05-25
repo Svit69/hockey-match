@@ -3,6 +3,7 @@ import styled, { keyframes } from 'styled-components';
 import { clubs, Club } from './types/clubs';
 import { PlayerSearch } from './components/PlayerSearch';
 import { SearchResult, TaskVariant, Player } from './types/players';
+import { useSound } from './hooks/useSound';
 
 const AppContainer = styled.div`
   background-color: #1a1a1a;
@@ -210,17 +211,34 @@ const ClubRow = styled.div`
 `;
 
 const TiltContainer = styled.div<{ rotateX: number; rotateY: number; isHovered: boolean }>`
-  transform: rotateX(${props => props.rotateX * (props.isHovered ? 2 : 1)}deg) 
-            rotateY(${props => props.rotateY * (props.isHovered ? 2 : 1)}deg);
+  transform: rotateX(${props => props.rotateX * (props.isHovered ? 3 : 1.5)}deg) 
+            rotateY(${props => props.rotateY * (props.isHovered ? 3 : 1.5)}deg);
   transform-style: preserve-3d;
-  transition: transform 0.3s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
   cursor: default;
+  position: relative;
   
   &:hover {
-    transform: rotateX(${props => props.rotateX * 2}deg) 
-              rotateY(${props => props.rotateY * 2}deg) 
-              scale(1.05);
+    transform: rotateX(${props => props.rotateX * 3}deg) 
+              rotateY(${props => props.rotateY * 3}deg) 
+              scale(1.08);
+    filter: brightness(1.1);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: 8px;
+  }
+
+  &:hover::after {
+    opacity: ${props => props.isHovered ? 1 : 0};
   }
 `;
 
@@ -313,6 +331,7 @@ export interface Task {
 
 function App() {
   const [isMuted, setIsMuted] = useState(false);
+  const { playWinSound, playLoseSound } = useSound(isMuted);
   const [winStreak, setWinStreak] = useState(0);
   const [currentTask, setCurrentTask] = useState<Task>({
     firstClub: clubs[0].name,
@@ -418,13 +437,40 @@ function App() {
     setShowPlusOne(false);
   };
 
+  // Функция для нелинейной анимации (easeInOutQuad)
+  const easeInOutQuad = (t: number): number => {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
   const animateStreakReset = async (currentStreak: number) => {
     setStreakColor('#E70000');
-    for (let i = currentStreak; i >= 0; i--) {
-      setWinStreak(i);
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    setStreakColor('#ABE700');
+    
+    const totalAnimationDuration = 1000; // Общая длительность анимации в мс
+    const startTime = Date.now();
+    const initialStreak = currentStreak;
+    
+    // Используем requestAnimationFrame для более плавной анимации
+    const animate = () => {
+      const currentTime = Date.now();
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / totalAnimationDuration, 1);
+      
+      // Применяем функцию плавности для нелинейной анимации
+      const easedProgress = easeInOutQuad(progress);
+      const currentValue = Math.round(initialStreak - (initialStreak * easedProgress));
+      
+      setWinStreak(currentValue);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setWinStreak(0);
+        setStreakColor('#ABE700');
+      }
+    };
+    
+    requestAnimationFrame(animate);
+    await new Promise(resolve => setTimeout(resolve, totalAnimationDuration));
   };
 
   const checkPlayerMatch = (playerTeams: string[], task: Task, player: Player): boolean => {
@@ -489,9 +535,11 @@ function App() {
 
     if (isCorrect) {
       console.log('✅ ПРАВИЛЬНО!');
+      playWinSound();
       await animateWinStreak();
     } else {
       console.log('❌ НЕПРАВИЛЬНО!');
+      playLoseSound();
       await animateStreakReset(winStreak);
     }
 
