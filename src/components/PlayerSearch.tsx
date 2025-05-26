@@ -147,20 +147,29 @@ const fadeOutAnimation = keyframes`
   0% {
     opacity: 1;
     transform: translateX(0) scale(1);
+    background: #2a2a2a;
   }
-  50% {
-    opacity: 0.8;
+  30% {
+    opacity: 1;
     transform: translateX(10px) scale(1.05);
+    background: #4CAF50;
   }
   100% {
     opacity: 0;
-    transform: translateX(-100%) scale(0.8);
+    transform: translateX(-100%) scale(0.95);
+    background: #4CAF50;
   }
 `;
 
 const AnimatedResultItem = styled(ResultItem)<{ isRemoving: boolean }>`
-  animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   transform-origin: center left;
+  background: #2a2a2a;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background: ${props => props.isRemoving ? '#4CAF50' : '#3a3a3a'};
+  }
 `;
 
 interface PlayerSearchProps {
@@ -255,7 +264,7 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
     animateAndRemovePlayer: async (playerName: string) => {
       setRemovingPlayer(playerName);
       await new Promise(resolve => {
-        animationTimeoutRef.current = setTimeout(resolve, 500);
+        animationTimeoutRef.current = setTimeout(resolve, 800);
       });
       setRemovingPlayer(null);
     }
