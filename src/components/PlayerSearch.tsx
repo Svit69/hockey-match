@@ -312,18 +312,13 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
         const response = await fetch('/players.csv');
         const text = await response.text();
         
-        console.log('\n📑 ЗАГРУЗКА ДАННЫХ');
-        console.log('------------------');
-        
         const players = parseCSV(text);
-        console.log('Загружено игроков:', players.length);
-        console.log('Пример данных:', players[0]);
         
         const normalizedSearchTerm = normalizeText(searchTerm);
         const searchVariants = generateVariants(normalizedSearchTerm);
         
         const filtered = players
-          .filter(player => !selectedPlayers.has(player.name)) // Фильтруем выбранных игроков
+          .filter(player => !selectedPlayers.has(player.name))
           .map(player => {
             const normalizedName = normalizeText(player.name);
             
@@ -347,7 +342,6 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
           .sort((a, b) => b.similarity - a.similarity)
           .slice(0, 7);
 
-        console.log('Найдено совпадений:', filtered.length);
         setResults(filtered);
       } catch (error) {
         console.error('Ошибка при поиске игроков:', error);

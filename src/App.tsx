@@ -465,27 +465,10 @@ function App() {
   };
 
   const checkPlayerMatch = (playerTeams: string[], task: Task, player: Player): boolean => {
-    console.log('🎯 Текущая задача:', {
-      firstClub: task.firstClub,
-      secondVariant: {
-        type: task.secondVariant.type,
-        name: task.secondVariant.name
-      }
-    });
-
-    console.log('🏒 Данные игрока:', {
-      name: player.name,
-      teams: playerTeams,
-      played_in_nhl: player.played_in_nhl,
-      gagarin_cup: player.gagarin_cup
-    });
-
     // Проверяем, играл ли за первый клуб
     const playedForFirstClub = playerTeams.some(team => 
       cleanTeamName(team) === task.firstClub
     );
-
-    console.log(`✓ Играл за ${task.firstClub}:`, playedForFirstClub);
 
     if (!playedForFirstClub) return false;
 
@@ -497,19 +480,15 @@ function App() {
         secondConditionMet = playerTeams.some(team => 
           cleanTeamName(team) === task.secondVariant.name
         );
-        console.log(`✓ Играл за ${task.secondVariant.name}:`, secondConditionMet);
         break;
       case 'nhl':
         secondConditionMet = player.played_in_nhl;
-        console.log('✓ Играл в НХЛ:', secondConditionMet);
         break;
       case 'gagarin':
         secondConditionMet = player.gagarin_cup;
-        console.log('✓ Выигрывал Кубок Гагарина:', secondConditionMet);
         break;
     }
 
-    console.log('🎮 Итоговый результат:', secondConditionMet);
     return secondConditionMet;
   };
 
@@ -519,13 +498,9 @@ function App() {
       .map(team => cleanTeamName(team))
       .filter(team => team !== '');
 
-    console.log('\n📊 ПРОВЕРКА ОТВЕТА');
-    console.log('------------------');
-
     const isCorrect = checkPlayerMatch(playerTeams, currentTask, result.player);
 
     if (isCorrect) {
-      console.log('✅ ПРАВИЛЬНО!');
       // Сначала запускаем анимацию
       if (playerSearchRef.current) {
         await playerSearchRef.current.animateAndRemovePlayer(result.player.name);
@@ -539,7 +514,6 @@ function App() {
       });
       await animateWinStreak();
     } else {
-      console.log('❌ НЕПРАВИЛЬНО!');
       playLoseSound();
       setSelectedPlayers(new Set()); // Сбрасываем список выбранных игроков
       await animateStreakReset(winStreak);
