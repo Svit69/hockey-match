@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { clubs, Club } from './types/clubs';
 import { PlayerSearch } from './components/PlayerSearch';
@@ -314,6 +314,10 @@ export interface Task {
   secondVariant: TaskVariant;
 }
 
+interface PlayerSearchRef {
+  animateAndRemovePlayer: (playerName: string) => Promise<void>;
+}
+
 function App() {
   const [isMuted, setIsMuted] = useState(false);
   const { playWinSound, playLoseSound } = useSound(isMuted);
@@ -332,6 +336,7 @@ function App() {
   const [showPlusOne, setShowPlusOne] = useState(false);
   const [streakColor, setStreakColor] = useState('#ABE700');
   const [isHovered, setIsHovered] = useState(false);
+  const playerSearchRef = useRef<PlayerSearchRef>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -521,6 +526,11 @@ function App() {
 
     if (isCorrect) {
       console.log('✅ ПРАВИЛЬНО!');
+      // Сначала запускаем анимацию
+      if (playerSearchRef.current) {
+        await playerSearchRef.current.animateAndRemovePlayer(result.player.name);
+      }
+      // Затем обновляем состояние и проигрываем звук
       playWinSound();
       setSelectedPlayers(prev => {
         const newSet = new Set(prev);
@@ -566,6 +576,7 @@ function App() {
       <MainContent>
         <SearchSection>
           <PlayerSearch 
+            ref={playerSearchRef}
             onSelect={handlePlayerSelect} 
             selectedPlayers={selectedPlayers}
           />

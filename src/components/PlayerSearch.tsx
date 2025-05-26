@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Player, SearchResult, MatchType } from '../types/players';
 
@@ -146,16 +146,21 @@ const PlayerName = styled.div`
 const fadeOutAnimation = keyframes`
   0% {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(10px) scale(1.05);
   }
   100% {
     opacity: 0;
-    transform: translateX(-100%);
+    transform: translateX(-100%) scale(0.8);
   }
 `;
 
 const AnimatedResultItem = styled(ResultItem)<{ isRemoving: boolean }>`
-  animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.3s ease-out forwards;
+  animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: center left;
 `;
 
 interface PlayerSearchProps {
@@ -233,13 +238,39 @@ const calculateSimilarity = (a: string, b: string): number => {
   return (matches / Math.max(a.length, b.length)) * 100;
 };
 
-export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect, selectedPlayers }) => {
+export interface PlayerSearchRef {
+  animateAndRemovePlayer: (playerName: string) => Promise<void>;
+}
+
+export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ onSelect, selectedPlayers }, ref) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [removingPlayer, setRemovingPlayer] = useState<string | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const animationTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // Экспортируем функцию анимации через ref
+  useImperativeHandle(ref, () => ({
+    animateAndRemovePlayer: async (playerName: string) => {
+      setRemovingPlayer(playerName);
+      await new Promise(resolve => {
+        animationTimeoutRef.current = setTimeout(resolve, 500);
+      });
+      setRemovingPlayer(null);
+    }
+  }));
+
+  // Очищаем таймаут при размонтировании
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Обработчик клика вне компонента
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
@@ -253,6 +284,13 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect, selectedPl
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const handleSelect = (result: SearchResult) => {
+    onSelect(result);
+    setSearchTerm('');
+    setResults([]);
+    setIsFocused(false);
+  };
 
   useEffect(() => {
     const searchPlayers = async () => {
@@ -312,16 +350,6 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect, selectedPl
     return () => clearTimeout(timeoutId);
   }, [searchTerm, selectedPlayers]);
 
-  const handleSelect = async (result: SearchResult) => {
-    setRemovingPlayer(result.player.name);
-    await new Promise(resolve => setTimeout(resolve, 300)); // Ждем завершения анимации
-    onSelect(result);
-    setSearchTerm('');
-    setResults([]);
-    setIsFocused(false);
-    setRemovingPlayer(null);
-  };
-
   return (
     <SearchContainer ref={searchContainerRef}>
       <SearchWrapper isFocused={isFocused}>
@@ -351,7 +379,7 @@ export const PlayerSearch: React.FC<PlayerSearchProps> = ({ onSelect, selectedPl
       )}
     </SearchContainer>
   );
-};
+});
 
 // Вспомогательная функция для парсинга CSV
 function parseCSV(csv: string): Player[] {
