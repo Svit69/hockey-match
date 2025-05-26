@@ -501,21 +501,22 @@ function App() {
     const isCorrect = checkPlayerMatch(playerTeams, currentTask, result.player);
 
     if (isCorrect) {
-      // Сначала запускаем анимацию
-      if (playerSearchRef.current) {
-        await playerSearchRef.current.animateAndRemovePlayer(result.player.name);
-      }
-      // Затем обновляем состояние и проигрываем звук
       playWinSound();
+      // Запускаем обе анимации одновременно
+      const animations = [
+        playerSearchRef.current?.animateAndRemovePlayer(result.player.name),
+        animateWinStreak()
+      ];
+      await Promise.all(animations);
+      
       setSelectedPlayers(prev => {
         const newSet = new Set(prev);
         newSet.add(result.player.name);
         return newSet;
       });
-      await animateWinStreak();
     } else {
       playLoseSound();
-      setSelectedPlayers(new Set()); // Сбрасываем список выбранных игроков
+      setSelectedPlayers(new Set());
       await animateStreakReset(winStreak);
     }
 

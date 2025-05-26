@@ -168,22 +168,22 @@ const floatDownAnimation = keyframes`
   }
   100% {
     opacity: 0;
-    transform: translateY(100px);
+    transform: translateY(20px);
   }
 `;
 
 const FloatingText = styled.div<{ isVisible: boolean }>`
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 16px 24px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  padding: 12px 12px 12px 48px;
   background: rgb(26, 26, 26);
   color: white;
   font-weight: bold;
-  border-radius: 4px;
   opacity: ${props => props.isVisible ? 1 : 0};
   pointer-events: none;
-  animation: ${props => props.isVisible ? floatDownAnimation : 'none'} 1s ease-out forwards;
+  animation: ${props => props.isVisible ? floatDownAnimation : 'none'} 0.5s ease-out forwards;
   z-index: 1000;
 `;
 
@@ -198,7 +198,7 @@ const FloatingTextContainer = styled.div`
 `;
 
 const AnimatedResultItem = styled(ResultItem)<{ isRemoving: boolean }>`
-  animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   transform-origin: center left;
   background: #2a2a2a;
   transition: background-color 0.3s ease;
@@ -300,31 +300,16 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
   // Экспортируем функцию анимации через ref
   useImperativeHandle(ref, () => ({
     animateAndRemovePlayer: async (playerName: string) => {
-      // Сначала показываем плавающий текст
+      setRemovingPlayer(playerName);
       setFloatingPlayerName(playerName);
       
-      // Через небольшую задержку запускаем анимацию исчезновения элемента списка
+      // Ждем завершения обеих анимаций
       await new Promise(resolve => {
-        setTimeout(() => {
-          setRemovingPlayer(playerName);
-          resolve(null);
-        }, 100);
-      });
-
-      // Ждем завершения анимации исчезновения
-      await new Promise(resolve => {
-        animationTimeoutRef.current = setTimeout(resolve, 800);
+        animationTimeoutRef.current = setTimeout(resolve, 500);
       });
       
       setRemovingPlayer(null);
-
-      // Ждем завершения анимации плавающего текста
-      await new Promise(resolve => {
-        setTimeout(() => {
-          setFloatingPlayerName(null);
-          resolve(null);
-        }, 1000);
-      });
+      setFloatingPlayerName(null);
     }
   }));
 
@@ -412,42 +397,38 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
   }, [searchTerm, selectedPlayers]);
 
   return (
-    <>
-      <SearchContainer ref={searchContainerRef}>
-        <SearchWrapper isFocused={isFocused}>
-          <SearchIcon src="/search.svg" alt="Search" />
-          <SearchInput
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => !searchTerm && setIsFocused(false)}
-            placeholder="Поиск"
-          />
-        </SearchWrapper>
-        {results.length > 0 && (
-          <ResultsList isVisible={true}>
-            {results.map((result, index) => (
-              <AnimatedResultItem 
-                key={result.player.name}
-                onClick={() => handleSelect(result)}
-                onTouchEnd={() => handleSelect(result)}
-                isRemoving={removingPlayer === result.player.name}
-              >
-                <PlayerName>{result.player.name}</PlayerName>
-              </AnimatedResultItem>
-            ))}
-          </ResultsList>
-        )}
-      </SearchContainer>
-      <FloatingTextContainer>
+    <SearchContainer ref={searchContainerRef}>
+      <SearchWrapper isFocused={isFocused}>
+        <SearchIcon src="/search.svg" alt="Search" />
+        <SearchInput
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => !searchTerm && setIsFocused(false)}
+          placeholder="Поиск"
+        />
         {floatingPlayerName && (
           <FloatingText isVisible={true}>
             {floatingPlayerName}
           </FloatingText>
         )}
-      </FloatingTextContainer>
-    </>
+      </SearchWrapper>
+      {results.length > 0 && (
+        <ResultsList isVisible={true}>
+          {results.map((result, index) => (
+            <AnimatedResultItem 
+              key={result.player.name}
+              onClick={() => handleSelect(result)}
+              onTouchEnd={() => handleSelect(result)}
+              isRemoving={removingPlayer === result.player.name}
+            >
+              <PlayerName>{result.player.name}</PlayerName>
+            </AnimatedResultItem>
+          ))}
+        </ResultsList>
+      )}
+    </SearchContainer>
   );
 });
 
