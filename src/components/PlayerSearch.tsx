@@ -161,11 +161,38 @@ const fadeOutAnimation = keyframes`
   }
 `;
 
+const floatDownAnimation = keyframes`
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+`;
+
+const FloatingText = styled.div<{ isVisible: boolean }>`
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  padding: 12px;
+  background: rgb(26, 26, 26);
+  color: white;
+  font-weight: bold;
+  opacity: 0;
+  pointer-events: none;
+  animation: ${props => props.isVisible ? floatDownAnimation : 'none'} 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 1000;
+`;
+
 const AnimatedResultItem = styled(ResultItem)<{ isRemoving: boolean }>`
   animation: ${props => props.isRemoving ? fadeOutAnimation : 'none'} 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   transform-origin: center left;
   background: #2a2a2a;
   transition: background-color 0.3s ease;
+  position: relative;
 
   &:hover {
     background: ${props => props.isRemoving ? '#4CAF50' : '#3a3a3a'};
@@ -256,6 +283,7 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const [removingPlayer, setRemovingPlayer] = useState<string | null>(null);
+  const [floatingPlayerName, setFloatingPlayerName] = useState<string | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
 
@@ -263,10 +291,17 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
   useImperativeHandle(ref, () => ({
     animateAndRemovePlayer: async (playerName: string) => {
       setRemovingPlayer(playerName);
+      setFloatingPlayerName(playerName);
       await new Promise(resolve => {
         animationTimeoutRef.current = setTimeout(resolve, 800);
       });
       setRemovingPlayer(null);
+      await new Promise(resolve => {
+        setTimeout(() => {
+          setFloatingPlayerName(null);
+          resolve(null);
+        }, 1000);
+      });
     }
   }));
 
@@ -376,6 +411,11 @@ export const PlayerSearch = forwardRef<PlayerSearchRef, PlayerSearchProps>(({ on
               isRemoving={removingPlayer === result.player.name}
             >
               <PlayerName>{result.player.name}</PlayerName>
+              {removingPlayer === result.player.name && (
+                <FloatingText isVisible={floatingPlayerName === result.player.name}>
+                  {result.player.name}
+                </FloatingText>
+              )}
             </AnimatedResultItem>
           ))}
         </ResultsList>
